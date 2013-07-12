@@ -28,6 +28,7 @@ function maqawAjaxPost(url, params, callback) {
     xhr.onreadystatechange = ensureReadiness;
 
     function ensureReadiness() {
+        console.log("ensure readiness");
         if(xhr.readyState < 4) {
             return;
         }

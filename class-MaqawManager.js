@@ -36,6 +36,7 @@ function MaqawManager(display) {
 
     this.loginClicked = function () {
         var params = 'username=additt&password=MapleAdditt&user[id]='+that.id+'&user[key]='+key;
+        console.log(params);
         maqawAjaxPost('http://'+host+':'+port+'/login', encodeURI(params), function(){
             that.clientSession = that.activeSession;
             that.activeSession = new RepSession(that);
