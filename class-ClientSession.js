@@ -6,6 +6,8 @@ function ClientSession(manager) {
     var that = this;
     this.chatSession = new ChatSession('src', 'dst');
     this.maqawManager = manager;
+    // Whether or not there is a rep available to chat
+    this.isRepAvailable = false;
 
     // initialize header container for this session
     this.header = document.createElement('DIV');
@@ -21,7 +23,7 @@ function ClientSession(manager) {
 
     // create div to hold chat info
     this.clientChatWindow = document.createElement('DIV');
-    this.clientChatWindow.id = 'client-chat-window';
+    this.clientChatWindow.className = 'client-chat-window';
 
     // add chat session
     this.clientChatWindow.appendChild(this.chatSession.getContainer());
@@ -48,10 +50,6 @@ function ClientSession(manager) {
     maqawLink.id = 'maqaw-link';
     maqawLink.innerHTML = 'POWERED BY <a href="http://www.maqaw.com">MAQAW</a>';
     chatFooter.appendChild(maqawLink);
-
-
-    // set the chat window to default to this configuration
-    setClientChat();
 
     /* Create elements that make up the login window  for when the login button is clicked */
     // create login header
@@ -111,6 +109,44 @@ function ClientSession(manager) {
     loginFooter.innerHTML = "Don't have an account? Sign up at <a href='http://www.maqaw.com'>Maqaw.com</a>!";
     this.loginWindow.appendChild(loginFooter);
 
+    /* Create container for when no rep is available */
+    this.noRepWindow = document.createElement("DIV");
+    this.noRepWindow.id = 'maqaw-no-rep-window';
+    this.noRepWindow.className = 'client-chat-window'
+    this.noRepWindow.innerHTML = '';
+
+    var noRepText = document.createElement("DIV");
+    noRepText.className = 'chat-display';
+    noRepText.innerHTML = 'Sorry, there are no representatives available to chat';
+    this.noRepWindow.appendChild(noRepText);
+
+    this.noRepHeader = document.createElement('DIV');
+    this.noRepHeader.innerHTML = "Send us an email!";
+    this.noRepHeader.className = 'maqaw-chat-header-text';
+
+    // add footer
+    var noRepFooter;
+    noRepFooter = document.createElement('DIV');
+    noRepFooter.id = 'chat-footer';
+    this.noRepWindow.appendChild(noRepFooter);
+
+    // add login button to footer
+    var loginButton;
+    loginButton = document.createElement('DIV');
+    loginButton.id = 'login-button';
+    loginButton.innerHTML = "Login"
+    noRepFooter.appendChild(loginButton);
+
+    // setup callback for when login is clicked
+    loginButton.addEventListener('click', setLoginPage, false);
+
+    // add Maqaw link to footer
+    var maqawLink;
+    maqawLink = document.createElement('DIV');
+    maqawLink.id = 'maqaw-link';
+    maqawLink.innerHTML = 'POWERED BY <a href="http://www.maqaw.com">MAQAW</a>';
+    noRepFooter.appendChild(maqawLink);
+
     // Switches the chat window to display login fields
     function setLoginPage() {
         that.body.innerHTML = '';
@@ -126,7 +162,27 @@ function ClientSession(manager) {
         that.header.appendChild(that.chatHeader);
     }
 
+    function setNoRepPage() {
+        that.body.innerHTML = '';
+        that.body.appendChild(that.noRepWindow);
+        that.header.innerHTML = '';
+        that.header.appendChild(that.noRepHeader);
+    }
 
+    /*
+     Updates whether or not their is an available rep for the visitor to chat with.
+     Pass in true if there is a rep available or false otherwise.
+     */
+    this.setIsRepAvailable = function(boolean){
+        if(boolean !== that.isRepAvailable){
+            if(boolean) setClientChat();
+            else setNoRepPage();
+        }
+        this.isRepAvailable = boolean;
+    }
+
+    // set the chat window to default to no rep
+    setNoRepPage();
 }
 
 ClientSession.prototype.getBodyContents = function () {
@@ -136,4 +192,5 @@ ClientSession.prototype.getBodyContents = function () {
 ClientSession.prototype.getHeaderContents = function () {
     return this.header;
 }
+
 
