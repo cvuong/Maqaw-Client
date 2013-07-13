@@ -4,7 +4,7 @@
  */
 function ClientSession(manager) {
     var that = this;
-    this.chatSession = new ChatSession('src', 'dst');
+    this.chatSession = undefined;
     this.maqawManager = manager;
     // Whether or not there is a rep available to chat
     this.isRepAvailable = false;
@@ -26,7 +26,8 @@ function ClientSession(manager) {
     this.clientChatWindow.className = 'client-chat-window';
 
     // add chat session
-    this.clientChatWindow.appendChild(this.chatSession.getContainer());
+    var chatSessionContainer = document.createElement("DIV");
+    this.clientChatWindow.appendChild(chatSessionContainer);
 
     // add footer
     var chatFooter;
@@ -175,7 +176,10 @@ function ClientSession(manager) {
      */
     this.setIsRepAvailable = function(boolean){
         if(boolean !== that.isRepAvailable){
-            if(boolean) setClientChat();
+            if(boolean) {
+                new ChatSession(chatSessionContainer, that.maqawManager.peer, 'src', that.maqawManager.id, 'dst', that.maqawManager.representatives[0]);
+                setClientChat();
+            }
             else setNoRepPage();
         }
         this.isRepAvailable = boolean;

@@ -68,7 +68,7 @@ function MaqawManager(display) {
     function parseVisitors(visitors){
         var list = [];
         for(var i = 0; i < visitors.length; i ++){
-            list.push(new Visitor('Visitor '+i, visitors[i]));
+            list.push(new Visitor(that, 'Visitor '+i, visitors[i]));
         }
         return list;
     }
