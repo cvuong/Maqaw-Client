@@ -9,15 +9,16 @@ function MaqawManager(display) {
 
     // this id is used whenever the client makes a connection with peerjs
     this.id = docCookies.getItem('peerId');
+    this.key = key;
     // an array of all visitors on the site. This is kept updated with web sockets
     this.visitors;
     // an array of ids of representatives that are available for chat
     this.representatives;
-    // The visitor or representative session currently being used
-    this.activeSession = undefined;
     this.maqawDisplay = display;
-    this.visitorSession = undefined;
-    this.repSession = undefined;
+    this.visitorSession;
+    this.repSession;
+    // a LoginPage object that is initialized the first time the login page is visited
+    this.loginPage;
 
 
     if (this.id) {
@@ -35,38 +36,57 @@ function MaqawManager(display) {
     });
 
     this.peer.on('clients', function (clients) {
-        console.log(clients.msg);
+        console.log('clients: '+clients.msg);
         that.visitors = parseVisitors(clients.msg);
-        that.activeSession && that.activeSession.setVisitors && that.activeSession.setVisitors();
+        that.repSession && that.repSession.setVisitors();
     });
 
     this.peer.on('representatives', function (reps) {
-        console.log(reps.msg);
+        console.log('Reps: '+reps.msg);
         that.representatives = reps.msg;
         updateReps();
     });
 
-    this.updateDisplay = function () {
-        that.maqawDisplay.setHeaderContents(that.activeSession.getHeaderContents());
-        that.maqawDisplay.setBodyContents(that.activeSession.getBodyContents());
-    }
-
     this.loginClicked = function () {
-        var loginPage = new LoginPage(that);
-        that.maqawDisplay.setHeaderContents(loginPage.getHeaderContents());
-        that.maqawDisplay.setBodyContents(loginPage.getBodyContents());
+        if(!that.loginPage) that.loginPage = new LoginPage(that);
+        that.maqawDisplay.setHeaderContents(that.loginPage.getHeaderContents());
+        that.maqawDisplay.setBodyContents(that.loginPage.getBodyContents());
     }
 
 
     this.logoutClicked = function () {
-        that.repSession = that.activeSession;
-        that.activeSession = that.visitorSession;
-        that.updateDisplay();
+        that.showVisitorSession();
     }
 
     this.showVisitorSession = function() {
         that.maqawDisplay.setHeaderContents(that.visitorSession.getHeaderContents());
         that.maqawDisplay.setBodyContents(that.visitorSession.getBodyContents());
+    }
+
+    // changes the maqaw client to display a Representative Session
+    // a Representative object can be passed in to start a new rep session
+    // for that rep. If no representative object is passed in an existing rep
+    // session is used. If no previous rep session exists, nothing is done
+    // rep - A
+    this.showRepSession = function(rep) {
+     var repSession;
+        // if a rep was passed, create a new session for it
+        if(typeof rep !== "undefined") {
+            repSession = new RepSession(that, rep);
+            that.repSession = repSession;
+        }
+        // otherwise check if an existing session can be used
+        else if(typeof that.repSession !== "undefined") {
+            repSession = that.repSession;
+        }
+        // otherwise we have no rep to work with so just return
+        else {
+            return;
+        }
+
+        // display the rep session
+        that.maqawDisplay.setHeaderContents(that.repSession.getHeaderContents());
+        that.maqawDisplay.setBodyContents(that.repSession.getBodyContents());
     }
 
     // take the list of visitors from the server and parse them into Visitor objects
@@ -82,10 +102,6 @@ function MaqawManager(display) {
     function updateReps() {
         that.visitorSession.setIsRepAvailable(that.representatives.length !== 0);
     }
-}
-
-MaqawManager.prototype.setActiveSession = function (session) {
-    this.activeSession = session;
 }
 
 
