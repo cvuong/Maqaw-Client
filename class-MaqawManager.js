@@ -4,8 +4,8 @@
 function MaqawManager(display) {
     var that = this,
         key = 'cat',
-        host= 'ec2-54-212-11-221.us-west-2.compute.amazonaws.com',
-        port= 3000;
+        host = 'ec2-54-212-11-221.us-west-2.compute.amazonaws.com',
+        port = 3000;
 
     // this id is used whenever the client makes a connection with peerjs
     this.id = docCookies.getItem('peerId');
@@ -16,28 +16,31 @@ function MaqawManager(display) {
     // The visitor or representative session currently being used
     this.activeSession = undefined;
     this.maqawDisplay = display;
+    this.visitorSession = undefined;
+    this.repSession = undefined;
+
 
     if (this.id) {
-      //  peer id has been stored in the browser. Use it
-      this.peer = new Peer(this.id, {key: key, host: host, port: port});
+        //  peer id has been stored in the browser. Use it
+        this.peer = new Peer(this.id, {key: key, host: host, port: port});
     } else {
-      //  No peer id cookie found. Retrieve new id from browser
-      this.peer = new Peer({key: key, host: host, port: port});
+        //  No peer id cookie found. Retrieve new id from browser
+        this.peer = new Peer({key: key, host: host, port: port});
     }
 
     /* listen for peer js events */
-    this.peer.on('open', function(id) {
+    this.peer.on('open', function (id) {
         that.id = id;
         docCookies.setItem('peerId', id, Infinity);
     });
 
-    this.peer.on('clients', function(clients) {
+    this.peer.on('clients', function (clients) {
         console.log(clients.msg);
         that.visitors = parseVisitors(clients.msg);
         that.activeSession && that.activeSession.setVisitors && that.activeSession.setVisitors();
     });
 
-    this.peer.on('representatives', function(reps) {
+    this.peer.on('representatives', function (reps) {
         console.log(reps.msg);
         that.representatives = reps.msg;
         updateReps();
@@ -49,48 +52,46 @@ function MaqawManager(display) {
     }
 
     this.loginClicked = function () {
-        /*
-        maqawAjaxPost(host+':'+port, params, function(){
-            that.clientSession = that.activeSession;
-            that.activeSession = new RepSession(that);
-            that.updateDisplay();
-        });     */
-        $.ajax({
-            type: 'POST',
-            url: "http://ec2-54-212-11-221.us-west-2.compute.amazonaws.com:3000/login",
-            data: { username: 'additt', password: 'MapleAdditt', user : { id: that.id, key: 'cat'} },
-            success: function() {
-                that.clientSession = that.activeSession;
-                that.activeSession = new RepSession(that);
-                that.updateDisplay();
-            }
-        });
+        var loginPage = new LoginPage(that);
+        that.maqawDisplay.setHeaderContents(loginPage.getHeaderContents());
+        that.maqawDisplay.setBodyContents(loginPage.getBodyContents());
     }
+
 
     this.logoutClicked = function () {
         that.repSession = that.activeSession;
-        that.activeSession = that.clientSession;
+        that.activeSession = that.visitorSession;
         that.updateDisplay();
     }
 
+    this.showVisitorSession = function() {
+        that.maqawDisplay.setHeaderContents(that.visitorSession.getHeaderContents());
+        that.maqawDisplay.setBodyContents(that.visitorSession.getBodyContents());
+    }
+
     // take the list of visitors from the server and parse them into Visitor objects
-    function parseVisitors(visitors){
+    function parseVisitors(visitors) {
         var list = [];
-        for(var i = 0; i < visitors.length; i ++){
-            list.push(new Visitor(that, 'Visitor '+i, visitors[i]));
+        for (var i = 0; i < visitors.length; i++) {
+            list.push(new Visitor(that, 'Visitor ' + i, visitors[i]));
         }
         return list;
     }
 
     // updates the status of the available reps for visitor chat
-    function updateReps(){
-        // this function only works for ClientSession
-      that.activeSession.setIsRepAvailable(that.representatives.length !== 0);
+    function updateReps() {
+        that.visitorSession.setIsRepAvailable(that.representatives.length !== 0);
     }
 }
 
 MaqawManager.prototype.setActiveSession = function (session) {
     this.activeSession = session;
 }
+
+
+MaqawManager.prototype.setVisitorSession = function(visitorSession) {
+    this.visitorSession = visitorSession;
+}
+
 
 
