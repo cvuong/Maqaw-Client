@@ -15,13 +15,15 @@ function ChatSession(chatSessionContainer, peer, srcName, dstName, dstId) {
     this.mainContainer = chatSessionContainer;
 
     // add div to display chat text
-    var textDisplay;
-    textDisplay = document.createElement('DIV');
-    textDisplay.className = 'chat-display';
-    this.mainContainer.appendChild(textDisplay);
+    this.textDisplay;
+    this.textDisplay = document.createElement('DIV');
+    this.textDisplay.className = 'chat-display';
+    this.mainContainer.appendChild(this.textDisplay);
+
+    this.textDisplay.addEventListener('load', function(){alert('hi')}, false);
 
     // put initial text in the display window
-    textDisplay.innerHTML = "Questions or feedback? We're online and ready to help you!";
+    this.textDisplay.innerHTML = "Questions or feedback? We're online and ready to help you!";
 
     // add box for text entry
     var textInput;
@@ -46,7 +48,7 @@ function ChatSession(chatSessionContainer, peer, srcName, dstName, dstId) {
             textInput.value = "";
             handleInput(text);
             // scroll to bottom of chat window
-            textDisplay.scrollTop = textDisplay.scrollHeight;
+            that.scrollToBottom();
         } else {
             return;
         }
@@ -59,7 +61,7 @@ function ChatSession(chatSessionContainer, peer, srcName, dstName, dstId) {
             //send data to other side
             if (conn) conn.send(text);
             // append new text to existing chat text
-            textDisplay.innerHTML = textDisplay.innerHTML + "<p class='chat-paragraph'>" +
+            that.textDisplay.innerHTML = that.textDisplay.innerHTML + "<p class='chat-paragraph'>" +
                 "<span class='chat-src-name'>" + that.srcName + ": </span>" + text + "</p>";
         }
     }
@@ -68,9 +70,12 @@ function ChatSession(chatSessionContainer, peer, srcName, dstName, dstId) {
         // test if string is not just whitespace
         if (/\S/.test(text)) {
             // append new text to existing chat text
-            textDisplay.innerHTML = textDisplay.innerHTML + "<p class='chat-paragraph'>" +
+            that.textDisplay.innerHTML = that.textDisplay.innerHTML + "<p class='chat-paragraph'>" +
                 "<span class='chat-dest-name'>" + that.dstName + ": </span>" + text + "</p>";
+
+            that.scrollToBottom();
         }
+
     }
 
     /* Set up peerjs connection handling for this chat session */
@@ -101,6 +106,21 @@ function ChatSession(chatSessionContainer, peer, srcName, dstName, dstId) {
         });
     }
 
+    // scroll chat window to most recent text
+    this.scrollToBottom = function() {
+        that.textDisplay.scrollTop = that.textDisplay.scrollHeight;
+    }
+
+    // returns to current text in the chat window
+    this.getText = function(){
+        return that.textDisplay.innerHTML;
+    }
+
+    // sets the chat window to have this text
+    this.setText = function(text){
+        that.textDisplay.innerHTML = text;
+    }
+
 
 }
 
@@ -108,4 +128,6 @@ function ChatSession(chatSessionContainer, peer, srcName, dstName, dstId) {
 ChatSession.prototype.getContainer = function () {
     return this.mainContainer;
 }
+
+
 

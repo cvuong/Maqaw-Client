@@ -20,25 +20,27 @@ function VisitorList(listDisplayContainer, chatManager) {
 
 // add a visitor to the existing list
 VisitorList.prototype.setVisitors = function (visitors) {
-    this.visitors = visitors;
-    this.tBody.innerHTML = '';
-    var that = this;
-    for (var i = 0; i < that.visitors.length; i++) {
-        // add an entry to the table for this visitor   W
-        var row = document.createElement("tr");
-        row.className = 'visitor-list-entry';
-        // each row contains a single cell containing the visitor name
-        var cell = document.createElement("td");
-        var cellText = document.createTextNode(visitors[i].name);
-        cell.appendChild(cellText);
-        row.appendChild(cell);
+    if (visitors) {
+        this.visitors = visitors;
+        this.tBody.innerHTML = '';
+        var that = this;
+        for (var i = 0; i < that.visitors.length; i++) {
+            // add an entry to the table for this visitor   W
+            var row = document.createElement("tr");
+            row.className = 'visitor-list-entry';
+            // each row contains a single cell containing the visitor name
+            var cell = document.createElement("td");
+            var cellText = document.createTextNode(visitors[i].name);
+            cell.appendChild(cellText);
+            row.appendChild(cell);
 
-        var event = clickCallback(row, visitors[i]);
-        // When the visitor's row is clicked they should be selected as active
-        row.addEventListener('click', event, false);
+            var event = clickCallback(row, visitors[i]);
+            // When the visitor's row is clicked they should be selected as active
+            row.addEventListener('click', event, false);
 
-        // add the row to the end of the table body
-        this.tBody.appendChild(row);
+            // add the row to the end of the table body
+            this.tBody.appendChild(row);
+        }
     }
 
     function clickCallback(row, visitor) {
