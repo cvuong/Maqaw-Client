@@ -29,6 +29,12 @@ function VisitorSession(manager) {
     var chatSessionContainer = document.createElement("DIV");
     this.visitorChatWindow.appendChild(chatSessionContainer);
 
+    // create ChatSession
+    // don't include a connection id so that no connection is started from this end. Leave
+    // it to the rep to start a connection
+    chatSessionContainer.innerHTML = '';
+    this.chatSession = new ChatSession(chatSessionContainer, that.maqawManager.peer, 'src', 'dst');
+
     // add footer
     var chatFooter;
     chatFooter = document.createElement('DIV');
@@ -91,6 +97,8 @@ function VisitorSession(manager) {
     noRepFooter.appendChild(maqawLink);
 
 
+
+
     function setClientChat() {
         that.body.innerHTML = '';
         that.body.appendChild(that.visitorChatWindow);
@@ -112,10 +120,6 @@ function VisitorSession(manager) {
     this.setIsRepAvailable = function(boolean){
         if(boolean !== that.isRepAvailable){
             if(boolean) {
-                // don't include a connection id so that no connection is started from this end. Leave
-                // it to the rep to start a connection
-                chatSessionContainer.innerHTML = '';
-                that.chatSession = new ChatSession(chatSessionContainer, that.maqawManager.peer, 'src', 'dst');
                 setClientChat();
             }
             else {
@@ -127,6 +131,19 @@ function VisitorSession(manager) {
 
     // set the chat window to default to no rep
     setNoRepPage();
+
+    // returns an object containing the data that constitutes this visitors session
+    this.getSessionData = function() {
+        return {
+            chatText: that.chatSession.getText()
+        };
+    }
+
+    // takes an visitor session data object (from getSessionData) and loads this visitor
+    // session with it
+    this.loadSessionData = function(sessionData) {
+        that.chatSession.setText(sessionData.chatText);
+    }
 }
 
 VisitorSession.prototype.getBodyContents = function () {
@@ -136,5 +153,7 @@ VisitorSession.prototype.getBodyContents = function () {
 VisitorSession.prototype.getHeaderContents = function () {
     return this.header;
 }
+
+
 
 
