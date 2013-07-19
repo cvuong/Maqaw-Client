@@ -2,7 +2,7 @@
  Creates a chat window with a unique key to talk
  to a visitor.
  */
-function ChatSession(chatSessionContainer, peer, srcName, dstName, dstId) {
+function ChatSession(chatSessionContainer, peer, srcName, dstName, dstId, connectionCallback) {
     this.srcName = srcName;
     this.dstName = dstName;
     this.dstId = dstId;
@@ -10,6 +10,10 @@ function ChatSession(chatSessionContainer, peer, srcName, dstName, dstId) {
     this.peer = peer;
     var isConnected;
     var conn;
+
+    // callback function for when the connection status changes. True is passed if a connection
+    // becomes open, and false is passed if the connection closes
+    this.connectionCallback = connectionCallback;
 
     // parent div to display chat session
     this.mainContainer = chatSessionContainer;
@@ -32,13 +36,16 @@ function ChatSession(chatSessionContainer, peer, srcName, dstName, dstId) {
     textInput.setAttribute('placeholder', 'Type and hit enter to chat');
     this.mainContainer.appendChild(textInput);
 
+
     // add listener to text input. Capture text when enter is pressed
-    var reset = false;
     try {
         textInput.addEventListener("keyup", keyPress, false);
     } catch (e) {
         textInput.attachEvent("onkeyup", keyPress);
     }
+
+    // attempt to open a connection if applicable
+    this.openConnection();
 
     function keyPress(e) {
         // check if enter was pressed
@@ -54,7 +61,7 @@ function ChatSession(chatSessionContainer, peer, srcName, dstName, dstId) {
         }
     }
 
-// This function is passed any text that the user inputs
+    // This function is passed any text that the user inputs
     function handleInput(text) {
         // test if string is not just whitespace
         if (/\S/.test(text)) {
@@ -83,6 +90,7 @@ function ChatSession(chatSessionContainer, peer, srcName, dstName, dstId) {
     function connect(c) {
         console.log("Opening connection");
         isConnected = true;
+        that.connectionCallback(true);
         conn = c;
         conn.on('data', function (data) {
             console.log(data);
@@ -90,19 +98,8 @@ function ChatSession(chatSessionContainer, peer, srcName, dstName, dstId) {
         });
         conn.on('close', function (err) {
             isConnected = false;
+            that.connectionCallback(false);
             handleInput('Your chat buddy has disconnected :(');
-        });
-    }
-
-    // only open a connection if an id was passed in
-    if (this.dstId) {
-        console.log("connecting to "+this.dstId);
-        var c = this.peer.connect(that.dstId);
-        c.on('open', function () {
-            connect(c);
-        });
-        c.on('error', function (err) {
-            console.log("Connection error: "+err);
         });
     }
 
@@ -119,6 +116,25 @@ function ChatSession(chatSessionContainer, peer, srcName, dstName, dstId) {
     // sets the chat window to have this text
     this.setText = function(text){
         that.textDisplay.innerHTML = text;
+    }
+
+    // Attempts to open a peerjs connection if the connection is currently closed,
+    // and an id has been provided
+    this.openConnection = function() {
+        if (that.dstId && !that.isConnected) {
+            console.log("connecting to "+that.dstId);
+            var c = that.peer.connect(that.dstId);
+            c.on('open', function () {
+                connect(c);
+            });
+            c.on('error', function (err) {
+                console.log("Connection error: "+err);
+            });
+        }
+    }
+
+    this.isConnected = function() {
+        return that.isConnected;
     }
 
 
