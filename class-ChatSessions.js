@@ -11,6 +11,10 @@ function ChatSession(chatSessionContainer, peer, srcName, dstName, dstId, connec
     var isConnected = false;
     var conn;
 
+    // whether or not the chat session should allow a rep to send a message
+    // this will be updated based on the connection status with the visitor
+    this.isSendingAllowed = false;
+
     // callback function for when the connection status changes. True is passed if a connection
     // becomes open, and false is passed if the connection closes
     this.connectionCallback = connectionCallback;
@@ -24,39 +28,38 @@ function ChatSession(chatSessionContainer, peer, srcName, dstName, dstId, connec
     this.textDisplay.className = 'chat-display';
     this.mainContainer.appendChild(this.textDisplay);
 
-    this.textDisplay.addEventListener('load', function(){alert('hi')}, false);
+    this.textDisplay.addEventListener('load', function () {
+        alert('hi')
+    }, false);
 
     // put initial text in the display window
     this.textDisplay.innerHTML = "Questions or feedback? We're online and ready to help you!";
 
     // add box for text entry
-    var textInput;
-    textInput = document.createElement('textarea');
-    textInput.className = 'chat-entry';
-    textInput.setAttribute('placeholder', 'Type and hit enter to chat');
-    this.mainContainer.appendChild(textInput);
+    this.textInput;
+    this.textInput = document.createElement('textarea');
+    this.textInput.className = 'chat-entry';
+    this.textInput.setAttribute('placeholder', 'Type and hit enter to chat');
+    this.mainContainer.appendChild(this.textInput);
 
 
     // add listener to text input. Capture text when enter is pressed
     try {
-        textInput.addEventListener("keyup", keyPress, false);
+        this.textInput.addEventListener("keyup", keyPress, false);
     } catch (e) {
-        textInput.attachEvent("onkeyup", keyPress);
+        this.textInput.attachEvent("onkeyup", keyPress);
     }
-
 
 
     function keyPress(e) {
         // check if enter was pressed
         if (e.keyCode === 13) {
             // get entered text and reset the box
-            var text = textInput.value;
-            textInput.value = "";
+            var text = that.textInput.value;
+            that.textInput.value = "";
             handleInput(text);
             // scroll to bottom of chat window
             that.scrollToBottom();
-        } else {
-            return;
         }
     }
 
@@ -86,8 +89,8 @@ function ChatSession(chatSessionContainer, peer, srcName, dstName, dstId, connec
 
     // if a connection callback function has been provided, let it know
     // the current connection status
-    function updateConnectionCallback(){
-        if(that.connectionCallback){
+    function updateConnectionCallback() {
+        if (that.connectionCallback) {
             that.connectionCallback(that.getIsConnected());
         }
     }
@@ -113,46 +116,77 @@ function ChatSession(chatSessionContainer, peer, srcName, dstName, dstId, connec
     }
 
     // scroll chat window to most recent text
-    this.scrollToBottom = function() {
+    this.scrollToBottom = function () {
         that.textDisplay.scrollTop = that.textDisplay.scrollHeight;
-    }
+    };
 
     // returns to current text in the chat window
-    this.getText = function(){
+    this.getText = function () {
         return that.textDisplay.innerHTML;
-    }
+    };
 
     // sets the chat window to have this text
-    this.setText = function(text){
+    this.setText = function (text) {
         that.textDisplay.innerHTML = text;
-    }
+    };
 
     // Attempts to open a peerjs connection if the connection is currently closed,
     // and an id has been provided
-    this.openConnection = function() {
-        if (that.dstId && !that.getIsConnected()) {
-            console.log("connecting to "+that.dstId);
+    this.openConnection = function () {
+        if (that.dstId) {
+            console.log("connecting to " + that.dstId);
             var c = that.peer.connect(that.dstId);
             c.on('open', function () {
                 connect(c);
             });
             c.on('error', function (err) {
-                console.log("Connection error: "+err);
+                console.log("Connection error: " + err);
             });
         }
-    }
+    };
 
-    this.getIsConnected = function() {
+    this.getIsConnected = function () {
         return isConnected;
-    }
+    };
 
     // if the connection is open, close it
-    this.disconnect = function(){
-        if(isConnected){
+    this.disconnect = function () {
+        if (isConnected) {
             conn.close();
-            //isConnected = false;
+            //isConnectedToServer = false;
             //updateConnectionCallback();
         }
+    };
+
+    // the allowMessageSending flag tells the chatsession whether or not they
+    // should let the rep send messages to the client. This should be disallowed
+    // when the client's connection stop, and reallowed when the connection starts again
+    this.setAllowMessageSending = function (allowMessageSending) {
+        // only do something if the state changed
+        if (allowMessageSending !== that.isSendingAllowed) {
+            if (allowMessageSending) {
+                allowMessages();
+            } else {
+                disallowMessages();
+            }
+            that.isSendingAllowed = allowMessageSending;
+        }
+    }
+
+    // prevent a message from being sent
+    function disallowMessages() {
+        if (that.textInput) {
+            that.textInput.disabled = true;
+        }
+        console.log('disallow messages');
+    }
+
+    // allow messages to be sent
+    function allowMessages() {
+        if (that.textInput) {
+            that.textInput.disabled = false;
+        }
+        console.log('allow messages');
     }
 
     // Finish by attempting to open a connection if applicable
@@ -162,7 +196,7 @@ function ChatSession(chatSessionContainer, peer, srcName, dstName, dstId, connec
 // Returns the main div container for the chat session
 ChatSession.prototype.getContainer = function () {
     return this.mainContainer;
-}
+};
 
 
 

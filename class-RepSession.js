@@ -73,13 +73,16 @@ function RepSession(manager, rep) {
         // pass the list along to the VisitorList so it can take care of updates
         that.visitorList.setVisitorList(visitors);
     }
+
+    // initialize the visitor list to have whatever visitors the manager knows about
+    this.updateVisitorList(this.maqawManager.visitors);
 }
 
 RepSession.prototype.getBodyContents = function() {
     return this.body;
-}
+};
 
 RepSession.prototype.getHeaderContents = function() {
     return this.header;
-}
+};
 

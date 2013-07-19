@@ -111,8 +111,8 @@ function LoginPage(manager) {
 
 LoginPage.prototype.getBodyContents = function () {
     return this.body;
-}
+};
 
 LoginPage.prototype.getHeaderContents = function () {
     return this.header;
-}
+};
