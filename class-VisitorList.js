@@ -37,8 +37,8 @@ function VisitorList(listDisplayContainer, chatManager, maqawManager) {
                     that.visitors[id] = createNewVisitorWithWrapper(id);
                 }
                 // otherwise make sure the visitor has an open connection
-                else if(!visitor.getIsConnected()){
-                    visitor.openConnection();
+                else if (!visitor.getIsConnected()) {
+                    visitor.setServerConnectionStatus(true);
                 }
 
             }
@@ -50,26 +50,26 @@ function VisitorList(listDisplayContainer, chatManager, maqawManager) {
         // this could be just a page change or refresh, but the connection
         // will be re-established when they make connect with the server again
         // TODO: More efficient way of finding disconnected peers
-        for(var visitorId in that.visitors){
+        for (var visitorId in that.visitors) {
             var isConnected = false;
-            for(i = 0; i < visitorIds.length; i++){
-                if(visitorId === visitorIds[i]){
+            for (i = 0; i < visitorIds.length; i++) {
+                if (visitorId === visitorIds[i]) {
                     isConnected = true;
                     break;
                 }
             }
 
             // if there are no matching ids for this visitor we need to disconnect them
-            if(!isConnected){
-                that.visitors[visitorId].disconnect();
+            if (!isConnected) {
+                that.visitors[visitorId].setServerConnectionStatus(false);
             }
         }
-    }
+    };
 
     // create a new visitor using the specified id, and wrap the visitor in a VisitorWrapper object
     // to help manage selecting and displaying the visitor
     function createNewVisitorWithWrapper(id) {
-        var visitorName = 'Visitor '+that.visitorCounter;
+        var visitorName = 'Visitor ' + that.visitorCounter;
         that.visitorCounter++;
         return new VisitorWrapper(id, visitorName, that);
     }
@@ -80,7 +80,7 @@ function VisitorList(listDisplayContainer, chatManager, maqawManager) {
             that.selectedVisitor.deselect();
 
             // if the previously selected visitor was selected again, leave it deselected
-            if(that.selectedVisitor === visitorWrapper){
+            if (that.selectedVisitor === visitorWrapper) {
                 that.selectedVisitor = undefined;
                 return;
             }
@@ -91,6 +91,15 @@ function VisitorList(listDisplayContainer, chatManager, maqawManager) {
 
         // save visitor
         that.selectedVisitor = visitorWrapper;
+    };
+
+    // a visitorwrapper calls this to tell the VisitorList that it is going inactive
+    // the visitor list needs to make sure that it doesn't have this visitor set
+    // as selected
+    this.hideVisitor = function(visitorWrapper){
+         if(that.selectedVisitor && that.selectedVisitor === visitorWrapper){
+             that.selectedVisitor = undefined;
+         }
     }
 }
 
@@ -99,7 +108,20 @@ function VisitorList(listDisplayContainer, chatManager, maqawManager) {
 function VisitorWrapper(id, name, visitorList) {
     var that = this;
     this.visitorList = visitorList;
+
+    // whether or not this visitor is connected to the peerserver. This will fluctuate briefly
+    // if they change or reload pages. If that happens we need to tell the chat session to restart
+    // its connection with this visitor
+    this.isConnectedToServer = true;
+
+    // the status of the chat session's connection with the visitor. This is subtly different
+    // from the visitors connection with the server. The server will
+    // immediately detect if the visitor changes pages, however, the chat
+    // connection takes five seconds to notice.
+    this.isChatConnected = false;
+
     this.visitor = new Visitor(this.visitorList.maqawManager, name, id, visitorConnectionCallback);
+
 
     // create row to display this visitor in the table
     this.row = document.createElement("tr");
@@ -114,8 +136,6 @@ function VisitorWrapper(id, name, visitorList) {
     this.visitorList.tBody.appendChild(this.row);
 
     this.isSelected = false;
-    // we don't care about the row index right now
-    this.rowIndex;
 
     // append click listener to row
     this.row.addEventListener('click', clickCallBack, false);
@@ -123,15 +143,90 @@ function VisitorWrapper(id, name, visitorList) {
         that.visitorList.setSelectedVisitor(that);
     }
 
+
+
+    // set the row to be hidden at first until it's visitor's chat session is established
+    hide();
+
+    // this visitor's row in the table is set to selected
     this.select = function () {
         that.isSelected = true;
         // change class to selected
         that.row.className = 'selected-visitor';
         // show visitor chat window
         that.visitorList.chatManager.showVisitorChat(that.visitor)
+    };
+
+    // the row is set to deselected
+    this.deselect = function () {
+        that.isSelected = false;
+        // change class to default
+        that.row.className = 'visitor-list-entry';
+        // clear chat window
+        that.visitorList.chatManager.clear();
+    };
+
+    this.getVisitor = function () {
+        return that.visitor;
+    };
+
+    this.getId = function () {
+        return that.visitor.getId();
+    };
+
+    // whether or not this visitor is connected to the server.
+    this.getIsConnected = function () {
+        return that.isConnectedToServer;
+    };
+
+    // tells the visitors chat session to open it's connection. The chat session will
+    // only do this if it's connection has been closed. if it succeeds in reopening the
+    // connection it will call the visitorConnectionCallback function
+    this.openConnection = function () {
+        that.visitor.getChatSession().openConnection();
+    };
+
+    // set whether or not this visitor is connected to the peer server
+    this.setServerConnectionStatus = function(isConnected){
+        // if the visitor switched from disconnected to connected, tell the chat session
+        // to reconnect with the visitor
+        if(!that.isConnectedToServer && isConnected){
+            that.visitor.getChatSession().openConnection();
+        }
+
+        // save the connection status
+        that.isConnectedToServer = isConnected;
+
+        // if they are disconnected, tell the chat session to disallow sending messages
+        updateChatSending();
     }
 
-    this.deselect = function () {
+    // tells the chat session whether or not they should allow messages to be sent by the rep
+    // if either the visitor is not currently connected to the server, or the chat connection
+    // is broken, messages should be prevented
+    function updateChatSending(){
+        that.visitor.chatSession.setAllowMessageSending(that.isConnectedToServer && that.isChatConnected);
+    }
+
+    // the visitor's chat session calls this function whenever the chat connection
+    // status changes. A bool representing the new status is passed in, with true for
+    // connected and false for disconnected
+    function visitorConnectionCallback(isConnected) {
+        that.isChatConnected = isConnected;
+        updateChatSending();
+
+        // update row display to reflect connection status
+        if (!that.isChatConnected) {
+            hide();
+        } else {
+            show();
+        }
+        console.log('VisitorWrapper connection status: ' + isConnected);
+    }
+
+    function hide() {
+        that.row.style.display = 'none';
+        that.visitorList.hideVisitor(that);
         that.isSelected = false;
         // change class to default
         that.row.className = 'visitor-list-entry';
@@ -139,34 +234,7 @@ function VisitorWrapper(id, name, visitorList) {
         that.visitorList.chatManager.clear();
     }
 
-    this.getVisitor = function () {
-        return that.visitor;
-    }
-
-    this.getId = function () {
-        return that.visitor.getId();
-    }
-
-    this.getIsConnected = function () {
-        return that.visitor.getChatSession().getIsConnected();
-    }
-
-    // tells the visitors chat session to open it's connection. The chat session will
-    // only do this if it's connection has been closed. if it succeeds in reopening the
-    // connection it will call the visitorConnectionCallback function
-    this.openConnection = function() {
-        that.visitor.getChatSession().openConnection();
-    }
-
-    // close the chat session connection
-    this.disconnect = function(){
-        that.visitor.getChatSession().disconnect();
-    }
-
-    // the visitor's chat session calls this function whenever the chat connection
-    // status changes. A bool representing the new status is passed in, with true for
-    // connected and false for disconnected
-    function visitorConnectionCallback(isConnected){
-         console.log('VisitorWrapper connection status: '+isConnected);
+    function show() {
+        that.row.style.display = 'block';
     }
 }

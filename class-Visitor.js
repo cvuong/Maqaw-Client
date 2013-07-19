@@ -13,9 +13,9 @@ function Visitor(manager, name, id, connectionCallback) {
 
     this.getChatSession = function() {
         return that.chatSession;
-    }
+    };
 
     this.getId = function(){
         return that.id;
-    }
+    };
 }

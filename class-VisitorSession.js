@@ -117,16 +117,16 @@ function VisitorSession(manager) {
      Updates whether or not their is an available rep for the visitor to chat with.
      Pass in true if there is a rep available or false otherwise.
      */
-    this.setIsRepAvailable = function(boolean){
-        if(boolean !== that.isRepAvailable){
-            if(boolean) {
+    this.setIsRepAvailable = function(isRepAvailable){
+        if(isRepAvailable !== that.isRepAvailable){
+            if(isRepAvailable) {
                 setClientChat();
             }
             else {
                 setNoRepPage();
             }
         }
-        this.isRepAvailable = boolean;
+        this.isRepAvailable = isRepAvailable;
     }
 
     // set the chat window to default to no rep

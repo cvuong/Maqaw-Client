@@ -17,6 +17,8 @@ function MaqawManager(display) {
     this.repSession;
     // a LoginPage object that is initialized the first time the login page is visited
     this.loginPage;
+    // the most recent list of visitors from the server
+    this.visitors = [];
 
 
     if (this.id) {
@@ -36,6 +38,7 @@ function MaqawManager(display) {
 
     this.peer.on('clients', function (visitors) {
         console.log('visitors: '+visitors.msg);
+        that.visitors = visitors.msg;
         that.repSession && that.repSession.updateVisitorList(visitors.msg);
     });
 
@@ -49,18 +52,18 @@ function MaqawManager(display) {
         if(!that.loginPage) that.loginPage = new LoginPage(that);
         that.maqawDisplay.setHeaderContents(that.loginPage.getHeaderContents());
         that.maqawDisplay.setBodyContents(that.loginPage.getBodyContents());
-    }
+    };
 
 
     this.logoutClicked = function () {
         that.showVisitorSession();
-    }
+    };
 
     // displays the saved visitor session
     this.showVisitorSession = function() {
         that.maqawDisplay.setHeaderContents(that.visitorSession.getHeaderContents());
         that.maqawDisplay.setBodyContents(that.visitorSession.getBodyContents());
-    }
+    };
 
     // tries to load a previously saved visitor session. If no session can be found
     // a new one is created
@@ -75,7 +78,7 @@ function MaqawManager(display) {
         }
         // save the session
         that.visitorSession = visitorSession;
-    }
+    };
 
     // changes the maqaw client to display a Representative Session
     // a Representative object can be passed in to start a new rep session
@@ -101,7 +104,7 @@ function MaqawManager(display) {
         // display the rep session
         that.maqawDisplay.setHeaderContents(that.repSession.getHeaderContents());
         that.maqawDisplay.setBodyContents(that.repSession.getBodyContents());
-    }
+    };
 
 
 
@@ -125,7 +128,7 @@ function MaqawManager(display) {
 // takes a VisitorSession object and loads it as the current visitor session
 MaqawManager.prototype.setVisitorSession = function(visitorSession) {
     this.visitorSession = visitorSession;
-}
+};
 
 
 
