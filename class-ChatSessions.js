@@ -8,7 +8,7 @@ function ChatSession(chatSessionContainer, peer, srcName, dstName, dstId, connec
     this.dstId = dstId;
     var that = this;
     this.peer = peer;
-    var isConnected;
+    var isConnected = false;
     var conn;
 
     // callback function for when the connection status changes. True is passed if a connection
@@ -44,8 +44,7 @@ function ChatSession(chatSessionContainer, peer, srcName, dstName, dstId, connec
         textInput.attachEvent("onkeyup", keyPress);
     }
 
-    // attempt to open a connection if applicable
-    this.openConnection();
+
 
     function keyPress(e) {
         // check if enter was pressed
@@ -85,12 +84,20 @@ function ChatSession(chatSessionContainer, peer, srcName, dstName, dstId, connec
 
     }
 
+    // if a connection callback function has been provided, let it know
+    // the current connection status
+    function updateConnectionCallback(){
+        if(that.connectionCallback){
+            that.connectionCallback(that.getIsConnected());
+        }
+    }
+
     /* Set up peerjs connection handling for this chat session */
     this.peer.on('connection', connect);
     function connect(c) {
         console.log("Opening connection");
         isConnected = true;
-        that.connectionCallback(true);
+        updateConnectionCallback();
         conn = c;
         conn.on('data', function (data) {
             console.log(data);
@@ -98,9 +105,11 @@ function ChatSession(chatSessionContainer, peer, srcName, dstName, dstId, connec
         });
         conn.on('close', function (err) {
             isConnected = false;
-            that.connectionCallback(false);
             handleInput('Your chat buddy has disconnected :(');
+            updateConnectionCallback();
         });
+
+
     }
 
     // scroll chat window to most recent text
@@ -121,7 +130,7 @@ function ChatSession(chatSessionContainer, peer, srcName, dstName, dstId, connec
     // Attempts to open a peerjs connection if the connection is currently closed,
     // and an id has been provided
     this.openConnection = function() {
-        if (that.dstId && !that.isConnected) {
+        if (that.dstId && !that.getIsConnected()) {
             console.log("connecting to "+that.dstId);
             var c = that.peer.connect(that.dstId);
             c.on('open', function () {
@@ -133,11 +142,21 @@ function ChatSession(chatSessionContainer, peer, srcName, dstName, dstId, connec
         }
     }
 
-    this.isConnected = function() {
-        return that.isConnected;
+    this.getIsConnected = function() {
+        return isConnected;
     }
 
+    // if the connection is open, close it
+    this.disconnect = function(){
+        if(isConnected){
+            conn.close();
+            //isConnected = false;
+            //updateConnectionCallback();
+        }
+    }
 
+    // Finish by attempting to open a connection if applicable
+    this.openConnection();
 }
 
 // Returns the main div container for the chat session
