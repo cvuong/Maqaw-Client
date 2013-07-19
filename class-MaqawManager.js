@@ -10,8 +10,6 @@ function MaqawManager(display) {
     // this id is used whenever the client makes a connection with peerjs
     this.id = docCookies.getItem('peerId');
     this.key = key;
-    // an array of all visitors on the site. This is kept updated with web sockets
-    this.visitors;
     // an array of ids of representatives that are available for chat
     this.representatives;
     this.maqawDisplay = display;
@@ -36,10 +34,9 @@ function MaqawManager(display) {
         docCookies.setItem('peerId', id, Infinity);
     });
 
-    this.peer.on('clients', function (clients) {
-        console.log('clients: '+clients.msg);
-        that.visitors = parseVisitors(clients.msg);
-        that.repSession && that.repSession.setVisitors();
+    this.peer.on('clients', function (visitors) {
+        console.log('visitors: '+visitors.msg);
+        that.repSession && that.repSession.updateVisitorList(visitors.msg);
     });
 
     this.peer.on('representatives', function (reps) {
@@ -106,14 +103,7 @@ function MaqawManager(display) {
         that.maqawDisplay.setBodyContents(that.repSession.getBodyContents());
     }
 
-    // take the list of visitors from the server and parse them into Visitor objects
-    function parseVisitors(visitors) {
-        var list = [];
-        for (var i = 0; i < visitors.length; i++) {
-            list.push(new Visitor(that, 'Visitor ' + i, visitors[i]));
-        }
-        return list;
-    }
+
 
     // updates the status of the available reps for visitor chat
     function updateReps() {

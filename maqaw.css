@@ -225,7 +225,9 @@ input:focus {
 }
 
 #visitor-list-container {
-
+   overflow-y: auto;
+    height: 175px;
+    width: 248px;
 }
 
 #visitor-list-table {
