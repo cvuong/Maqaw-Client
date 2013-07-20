@@ -116,8 +116,7 @@ function VisitorList(listDisplayContainer, chatManager, maqawManager) {
                 id: visitorWrapper.getId(),
                 isSelected: visitorWrapper.isSelected,
                 rowIndex: visitorWrapper.row.rowIndex,
-                chatText: visitorWrapper.visitor.getChatSession().getText(),
-                isChatConnected: visitorWrapper.visitor.getChatSession().getIsConnected()
+                chatText: visitorWrapper.visitor.getChatSession().getText()
             }
             data[counter] = visitorData;
             counter++;
@@ -138,11 +137,16 @@ function VisitorList(listDisplayContainer, chatManager, maqawManager) {
             // ideally we would like the visitors to show up in the same order in the table, but right now
             // we just append it to the end by passing rowIndex of -1
             var visitorWrapper = new VisitorWrapper(dataObject['id'], dataObject['name'], that, -1);
-            if(dataObject['isSelected']) visitorWrapper.select();
+            if(dataObject['isSelected']) {
+                that.selectedVisitor = visitorWrapper;
+                visitorWrapper.select();
+            }
+
+            // load the chat history
             visitorWrapper.visitor.getChatSession().setText(dataObject['chatText']);
-            // if this visitor was disconnected before, we want to hide them by default
-            // until they come back
-            //visitorWrapper.visitor.getChatSession().
+
+            // save this visitor in the list
+            that.visitors[visitorWrapper.getId()] = visitorWrapper;
         }
     }
 }
@@ -207,7 +211,7 @@ function VisitorWrapper(id, name, visitorList, rowIndex) {
         // change class to default
         that.row.className = 'visitor-list-entry';
         // clear chat window
-        that.visitorList.chatManager.clear();
+        that.visitorList.chatManager.clear(that.visitor);
     };
 
     this.getVisitor = function () {
@@ -274,7 +278,7 @@ function VisitorWrapper(id, name, visitorList, rowIndex) {
         // change class to default
         that.row.className = 'visitor-list-entry';
         // clear chat window
-        that.visitorList.chatManager.clear();
+        that.visitorList.chatManager.clear(that.visitor);
     }
 
     function show() {
