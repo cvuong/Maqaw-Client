@@ -77,13 +77,13 @@ function RepSession(manager, rep) {
     // takes an object created by getSessionData and attempts to restore
     // that session
     this.loadSessionData = function(sessionData){
-         that.visitorList.loadListData();
+         that.visitorList.loadListData(sessionData);
     }
 
     // returns an object representing the state of this session
     this.getSessionData = function(){
         // the only thing that really matters is the information on the visitors in the list
-         that.visitorList.getListData();
+         return that.visitorList.getListData();
     }
 
     // initialize the visitor list to have whatever visitors the manager knows about
