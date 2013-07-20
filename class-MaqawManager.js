@@ -90,10 +90,12 @@ function MaqawManager(display) {
         // if we are loading a saved session, retrieve stored data
         if (that.loadPreviousRepSession) {
             // attempt to reload previous rep session data
-            var storedSessionData = localStorage.getItem('maqawRepSession');
+            var storedSessionData = JSON.parse(localStorage.getItem('maqawRepSession'));
             // if previous data was found load it into the repSession
             if (storedSessionData) {
                 that.repSession.loadSessionData(storedSessionData);
+                // update the loaded data with the current visitor list
+                that.repSession.updateVisitorList(that.visitors);
             }
         }
 
@@ -139,6 +141,7 @@ function MaqawManager(display) {
         if (typeof that.repSession !== 'undefined') {
             var sessionData = that.repSession.getSessionData();
             var jsonSession = JSON.stringify(sessionData);
+            console.log(jsonSession);
             localStorage.setItem('maqawRepSession', jsonSession);
         }
     }

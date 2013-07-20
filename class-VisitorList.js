@@ -71,7 +71,8 @@ function VisitorList(listDisplayContainer, chatManager, maqawManager) {
     function createNewVisitorWithWrapper(id) {
         var visitorName = 'Visitor ' + that.visitorCounter;
         that.visitorCounter++;
-        return new VisitorWrapper(id, visitorName, that);
+        // use rowIndex of -1 so the row is added at the end of the table
+        return new VisitorWrapper(id, visitorName, that, -1);
     }
 
     this.setSelectedVisitor = function (visitorWrapper) {
@@ -96,32 +97,59 @@ function VisitorList(listDisplayContainer, chatManager, maqawManager) {
     // a visitorwrapper calls this to tell the VisitorList that it is going inactive
     // the visitor list needs to make sure that it doesn't have this visitor set
     // as selected
-    this.hideVisitor = function(visitorWrapper){
-         if(that.selectedVisitor && that.selectedVisitor === visitorWrapper){
-             that.selectedVisitor = undefined;
-         }
+    this.hideVisitor = function (visitorWrapper) {
+        if (that.selectedVisitor && that.selectedVisitor === visitorWrapper) {
+            that.selectedVisitor = undefined;
+        }
     }
 
     // return the an object representing the state of this visitorList
-    this.getListData = function(){
+    this.getListData = function () {
         var data = {};
         // create an entry for each visitor
-        for(var visitor in that.visitors){
-            console.log(visitor);
+        var counter = 0;
+        for (var visitorId in that.visitors) {
+            var visitorWrapper = that.visitors[visitorId];
+            // save the data that is important to state
+            var visitorData = {
+                name: visitorWrapper.visitor.name,
+                id: visitorWrapper.getId(),
+                isSelected: visitorWrapper.isSelected,
+                rowIndex: visitorWrapper.row.rowIndex,
+                chatText: visitorWrapper.visitor.getChatSession().getText(),
+                isChatConnected: visitorWrapper.visitor.getChatSession().getIsConnected()
+            }
+            data[counter] = visitorData;
+            counter++;
         }
-
         return data;
     }
 
     // load a state represented by an object from getListData
-    this.loadListData = function() {
+    this.loadListData = function (listData) {
+          // start by clearing any existing visitors and the visitor table
+        that.visitors = {};
+        that.tBody.innerHTML = '';
 
+        // go through each entry in the list data and restore it
+        for(var index in listData){
+            var dataObject = listData[index];
+            // create and update a visitorWrapper using this data
+            // ideally we would like the visitors to show up in the same order in the table, but right now
+            // we just append it to the end by passing rowIndex of -1
+            var visitorWrapper = new VisitorWrapper(dataObject['id'], dataObject['name'], that, -1);
+            if(dataObject['isSelected']) visitorWrapper.select();
+            visitorWrapper.visitor.getChatSession().setText(dataObject['chatText']);
+            // if this visitor was disconnected before, we want to hide them by default
+            // until they come back
+            //visitorWrapper.visitor.getChatSession().
+        }
     }
 }
 
 
 // this wrapper class monitors the status of a visitor
-function VisitorWrapper(id, name, visitorList) {
+function VisitorWrapper(id, name, visitorList, rowIndex) {
     var that = this;
     this.visitorList = visitorList;
 
@@ -140,7 +168,8 @@ function VisitorWrapper(id, name, visitorList) {
 
 
     // create row to display this visitor in the table
-    this.row = document.createElement("tr");
+
+    this.row = visitorList.table.insertRow(rowIndex);
     this.row.className = 'visitor-list-entry';
     // the row contains a single cell containing the visitor name
     var cell = document.createElement("td");
@@ -158,7 +187,6 @@ function VisitorWrapper(id, name, visitorList) {
     function clickCallBack() {
         that.visitorList.setSelectedVisitor(that);
     }
-
 
 
     // set the row to be hidden at first until it's visitor's chat session is established
@@ -203,10 +231,10 @@ function VisitorWrapper(id, name, visitorList) {
     };
 
     // set whether or not this visitor is connected to the peer server
-    this.setServerConnectionStatus = function(isConnected){
+    this.setServerConnectionStatus = function (isConnected) {
         // if the visitor switched from disconnected to connected, tell the chat session
         // to reconnect with the visitor
-        if(!that.isConnectedToServer && isConnected){
+        if (!that.isConnectedToServer && isConnected) {
             that.visitor.getChatSession().openConnection();
         }
 
@@ -220,7 +248,7 @@ function VisitorWrapper(id, name, visitorList) {
     // tells the chat session whether or not they should allow messages to be sent by the rep
     // if either the visitor is not currently connected to the server, or the chat connection
     // is broken, messages should be prevented
-    function updateChatSending(){
+    function updateChatSending() {
         that.visitor.chatSession.setAllowMessageSending(that.isConnectedToServer && that.isChatConnected);
     }
 
