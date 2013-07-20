@@ -101,6 +101,22 @@ function VisitorList(listDisplayContainer, chatManager, maqawManager) {
              that.selectedVisitor = undefined;
          }
     }
+
+    // return the an object representing the state of this visitorList
+    this.getListData = function(){
+        var data = {};
+        // create an entry for each visitor
+        for(var visitor in that.visitors){
+            console.log(visitor);
+        }
+
+        return data;
+    }
+
+    // load a state represented by an object from getListData
+    this.loadListData = function() {
+
+    }
 }
 
 
@@ -221,7 +237,6 @@ function VisitorWrapper(id, name, visitorList) {
         } else {
             show();
         }
-        console.log('VisitorWrapper connection status: ' + isConnected);
     }
 
     function hide() {
