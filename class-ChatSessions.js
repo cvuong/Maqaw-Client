@@ -224,12 +224,27 @@ function MaqawChatSession(chatSessionContainer, peer, srcName, dstName, dstId, c
     function attemptConnection(){
         // how many milliseconds we will wait until trying to connect again
         var retryInterval = 6000;
+        var isConnected = false;
 
-        var connectIntervalNum = setInterval(function(){that.openConnection(successCallback)}, retryInterval);
-
+        // this function is called when a successful connection is opened
         function successCallback(){
-            clearInterval(connectIntervalNum);
+            isConnected =  true;
         }
+
+        // create a function that will attempt to open a connection, and will retry
+        // every retryInterval milliseconds until a connection is established
+        // this function is immediately invoked
+        (function tryOpeningConnection(){
+            // start the connection opening process
+            if(!isConnected){
+                that.openConnection(successCallback);
+
+                // schedule it to try again in a bit.
+                setTimeout(tryOpeningConnection, retryInterval);
+            }
+        })();
+
+
     }
 }
 
