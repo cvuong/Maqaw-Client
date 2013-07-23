@@ -95,7 +95,6 @@
     overflow-x: hidden !important;
     white-space: pre-wrap !important; /* CSS3 */
     white-space: -moz-pre-wrap !important; /* Firefox */
-    white-space: -pre-wrap !important; /* Opera <7 */
     white-space: -o-pre-wrap !important; /* Opera 7 */
     word-wrap: break-word !important; /* IE */
 }
@@ -201,7 +200,7 @@ input[type="text"]:focus#maqaw-login-user-field {
     -webkit-box-shadow: 0 0 10px lightblue !important;
 }
 
-input[type="password"]#maqaw-login-password-field{
+input[type="password"]#maqaw-login-password-field {
     margin: 8px 0 0 20px !important;
     padding: 3px !important;
     border: 1px solid grey !important;
@@ -211,7 +210,7 @@ input[type="password"]#maqaw-login-password-field{
     width: 200px !important;
     height: 15px !important;
 }
-0
+
 input[type="password"]:focus#maqaw-login-password-field {
     box-shadow: 0 0 10px lightblue !important;
     -moz-box-shadow: 0 0 10px lightblue !important;

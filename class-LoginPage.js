@@ -112,15 +112,26 @@ function MaqawLoginPage(manager) {
             var rep = new MaqawRepresentative('RepName');
             // tell manager to change to rep mode using our representative data
             that.maqawManager.startNewRepSession(rep);
-            clearInterval(that.loginInterval);
+            that.loginSuccess = true;
         }
     }
 
     // attempts a login with the supplied parameters
     this.loginWithParams = function(params){
-        that.loginInterval = setInterval(function(){
-                maqawAjaxPost(loginEndpoint, params, handleLoginPostResponse);
-        }, 100);
+        that.loginSuccess = false;
+        var retryRate = 100;
+        var maxAttempts = 10;
+        var numAttempts = 0;
+
+        (function tryLogin(){
+            maqawAjaxPost(loginEndpoint, params, handleLoginPostResponse);
+            numAttempts++
+            if(!that.loginSuccess && numAttempts < maxAttempts){
+                setTimeout(tryLogin, retryRate);
+            } else if (numAttempts >= maxAttempts){
+                that.maqawManager.showVisitorSession();
+            }
+        })();
     }
 }
 
