@@ -88,40 +88,9 @@ function MaqawChatSession(chatSessionContainer, peer, srcName, dstName, dstId, c
 
     }
 
-    // takes a boolean representing if the peer is connected or not
-    // updates the setting, and turns off the text input box if
-    // a connection is not active. Calls a connectionCallback as well
-    // if one was provided
-    function setConnectionStatus(connectionStatus) {
-        that.isConnected = connectionStatus;
-
-        // change status of text input depending on connection
-        if (connectionStatus) {
-            allowMessages();
-        } else {
-            disallowMessages();
-        }
-
-        if (that.connectionCallback) {
-            that.connectionCallback(connectionStatus);
-        }
-    }
-
-    /* Set up peerjs connection handling for this chat session */
-    this.peer.on('connection', connect);
-    function connect(c) {
-        setConnectionStatus(true);
-        conn = c;
-        conn.on('data', function (data) {
-            console.log(data);
-            handleResponse(data);
-        });
-        conn.on('close', function (err) {
-            setConnectionStatus(false);
-        });
 
 
-    }
+
 
     // scroll chat window to most recent text
     this.scrollToBottom = function () {
@@ -142,10 +111,10 @@ function MaqawChatSession(chatSessionContainer, peer, srcName, dstName, dstId, c
     // and an id has been provided
     this.openConnection = function (onOpenCallback) {
         if (that.dstId) {
-            console.log("attempting connection with "+that.dstId+"at "+(new Date()).toLocaleTimeString());
+            console.log(that+": attempting connection with "+that.dstId+"at "+(new Date()).toLocaleTimeString());
             var c = that.peer.connect(that.dstId, {reliable: false});
             c.on('open', function () {
-                console.log("Connection opened with "+that.dstId+" at "+(new Date()).toLocaleTimeString());
+                console.log(that+": Connection opened with "+that.dstId+" at "+(new Date()).toLocaleTimeString());
                 // invoke the callback if one was provided
                 onOpenCallback && onOpenCallback();
                 connect(c);
@@ -155,6 +124,42 @@ function MaqawChatSession(chatSessionContainer, peer, srcName, dstName, dstId, c
             });
         }
     };
+
+    /* Set up peerjs connection handling for this chat session */
+    this.peer.on('connection', connect);
+    function connect(c) {
+        setConnectionStatus(true);
+        conn = c;
+        conn.on('data', function (data) {
+            console.log(data);
+            handleResponse(data);
+        });
+        conn.on('close', function (err) {
+            setConnectionStatus(false);
+        });
+
+
+    }
+
+    // takes a boolean representing if the peer is connected or not
+    // updates the setting, and turns off the text input box if
+    // a connection is not active. Calls a connectionCallback as well
+    // if one was provided
+    function setConnectionStatus(connectionStatus) {
+        that.isConnected = connectionStatus;
+        console.log("Setting connection status to "+connectionStatus);
+
+        // change status of text input depending on connection
+        if (connectionStatus) {
+            allowMessages();
+        } else {
+            disallowMessages();
+        }
+
+        if (that.connectionCallback) {
+            that.connectionCallback(connectionStatus);
+        }
+    }
 
     this.getIsConnected = function () {
         return that.isConnected;
@@ -179,12 +184,21 @@ function MaqawChatSession(chatSessionContainer, peer, srcName, dstName, dstId, c
                 disallowMessages();
             }
         }
-    }
+    };
 
+    // disallow sending messages until a connection is opened
     // prevent a message from being sent
     var savedTextValue = null;
+    disallowMessages();
+
+    // Finish by attempting to open a connection if applicable
+    if(that.dstId){
+        attemptConnection();
+    }
+
 
     function disallowMessages() {
+        console.log("In disallowed messages");
         if (that.textInput) {
             that.isSendingAllowed = false;
             that.textInput.disabled = true;
@@ -200,6 +214,7 @@ function MaqawChatSession(chatSessionContainer, peer, srcName, dstName, dstId, c
 
     // allow messages to be sent
     function allowMessages() {
+        console.log("In allow messages");
         if (that.textInput) {
             that.isSendingAllowed = true;
             that.textInput.disabled = false;
@@ -212,13 +227,7 @@ function MaqawChatSession(chatSessionContainer, peer, srcName, dstName, dstId, c
         }
     }
 
-    // disallow sending messages until a connection is opened
-    disallowMessages();
 
-    // Finish by attempting to open a connection if applicable
-    if(that.dstId){
-        attemptConnection();
-    }
 
 
     function attemptConnection(){

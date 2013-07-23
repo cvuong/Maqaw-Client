@@ -97,8 +97,8 @@ function MaqawVisitorSession(manager) {
     maqawLink.innerHTML = 'POWERED BY <a href="http://maqaw.com">MAQAW</a>';
     noRepFooter.appendChild(maqawLink);
 
-
-
+    // set the chat window to default to no rep
+    setNoRepPage();
 
     function setClientChat() {
         that.body.innerHTML = '';
@@ -128,17 +128,16 @@ function MaqawVisitorSession(manager) {
             }
         }
         this.isRepAvailable = isRepAvailable;
-    }
+    };
 
-    // set the chat window to default to no rep
-    setNoRepPage();
+
 
     // returns an object containing the data that constitutes this visitors session
     this.getSessionData = function() {
         return {
             chatText: that.chatSession.getText()
         };
-    }
+    };
 
     // takes an visitor session data object (from getSessionData) and loads this visitor
     // session with it
@@ -149,11 +148,11 @@ function MaqawVisitorSession(manager) {
 
 MaqawVisitorSession.prototype.getBodyContents = function () {
     return this.body;
-}
+};
 
 MaqawVisitorSession.prototype.getHeaderContents = function () {
     return this.header;
-}
+};
 
 
 

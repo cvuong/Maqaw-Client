@@ -29,7 +29,7 @@ function MaqawManager(options, display) {
         this.peer = new Peer(this.id, {key: this.key, host: host, port: port});
     } else {
         //  No peer id cookie found. Retrieve new id from browser
-        this.peer = new Peer({key: key, host: host, port: port});
+        this.peer = new Peer({key: this.key, host: host, port: port});
     }
 
     /* listen for peer js events */
