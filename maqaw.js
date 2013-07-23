@@ -3,11 +3,12 @@
  */
 
 // start by creating the display
-var maqawDisplay = new MaqawDisplay(false);
+// pass true to start the client minimized, or false to default to maximize
+var maqawDisplay = new MaqawDisplay(true);
 maqawDisplay.setup();
 
 // Initialize the MaqawManager to deal with clients and representatives
-var maqawManager = new MaqawManager(maqawDisplay);
+var maqawManager = new MaqawManager(maqawOptions, maqawDisplay);
 
 // start a visitor session
 maqawManager.startVisitorSession();
