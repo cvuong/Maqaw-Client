@@ -1,12 +1,63 @@
 #chat-container {
-    margin: 0;
-    padding: 0;
-    color: black;
-    background-color: transparent;
-    position: fixed;
-    left: 20px;
-    bottom: 0;
+    position: fixed !important;
+    left: 20px !important;
+    bottom: 0 !important;
+    top: auto !important;
+    right: auto !important;
+
+
+    z-index: 101 !important;
+
+    color: black !important;
+    background: transparent none repeat scroll 0 0 !important;
+
+    float: none !important;
+    clear: none !important;
+
+    padding: 0 !important;
+    margin: 0 !important;
+    border: 0 solid #000 !important;
+
+    min-height: 0 !important;
+    max-height: none !important;
+    height: auto !important;
+
+    min-width: 0 !important;
+    max-width: none !important;
+    width: auto !important;
+
+    font: normal normal normal 11px/1.5 arial, verdana, sans-serif !important;
+    list-style: disc outside none !important;
+    letter-spacing: normal !important;
+    text-align: left !important;
+    text-decoration: none !important;
+    text-indent: 0 !important;
+    text-transform: none !important;
+    white-space: normal !important;
+    word-spacing: normal !important;
+    vertical-align: baseline !important;
+
+    unicode-bidi: normal !important;
+    direction: ltr !important;
+
+    clip: auto !important;
+    overflow: visible !important;
+    visibility: visible !important;
+    outline: invert none medium !important;
+
+    /** odditites which will need specified separately for each property that it goes against **/
+    display: inline !important;
+    cursor: auto !important;
+
+    /* if any of the elements are to be draggable you cannot set these
+    you should however take care and set all four even if auto in the individual positioned elements
+    top: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+    left: auto !important;
+    */
 }
+
 
 #maqaw-client-header {
     padding-top: 8px;
