@@ -10,7 +10,7 @@ function MaqawChatSession(chatSessionContainer, peer, srcName, dstName, dstId, c
     var that = this;
     this.peer = peer;
     this.isConnected = false;
-    var conn;
+    this.conn;
 
     // whether or not the chat session should allow a rep to send a message
     // this will be updated based on the connection status with the visitor
@@ -69,7 +69,7 @@ function MaqawChatSession(chatSessionContainer, peer, srcName, dstName, dstId, c
         // test if string is not just whitespace
         if (/\S/.test(text)) {
             //send data to other side
-            if (conn) conn.send(text);
+            if (that.conn) that.conn.send(text);
             // append new text to existing chat text
             that.textDisplay.innerHTML = that.textDisplay.innerHTML + "<p class='chat-paragraph'>" +
                 "<span class='chat-src-name'>" + that.srcName + ": </span>" + text + "</p>";
@@ -112,33 +112,61 @@ function MaqawChatSession(chatSessionContainer, peer, srcName, dstName, dstId, c
     this.openConnection = function (onOpenCallback) {
         if (that.dstId) {
             console.log(that+": attempting connection with "+that.dstId+"at "+(new Date()).toLocaleTimeString());
-            var c = that.peer.connect(that.dstId, {reliable: false});
-            c.on('open', function () {
+            that.conn = that.peer.connect(that.dstId, {reliable: false});
+            that.conn.on('open', function () {
                 console.log(that+": Connection opened with "+that.dstId+" at "+(new Date()).toLocaleTimeString());
                 // invoke the callback if one was provided
                 onOpenCallback && onOpenCallback();
-                connect(c);
+                connect(that.conn);
             });
-            c.on('error', function (err) {
+            that.conn.on('error', function (err) {
                 console.log("Connection error: " + err);
             });
         }
     };
 
     /* Set up peerjs connection handling for this chat session */
-    this.peer.on('connection', connect);
+    this.peer.on('connection', receiveRequestFromPeer);
     function connect(c) {
+        console.log("in connect");
         setConnectionStatus(true);
-        conn = c;
-        conn.on('data', function (data) {
+        that.conn = c;
+        that.conn.on('data', function (data) {
             console.log(data);
             handleResponse(data);
         });
-        conn.on('close', function (err) {
+        that.conn.on('close', function (err) {
             setConnectionStatus(false);
         });
 
 
+    }
+
+    // An on Connection event that was triggered by receiving a connection from a peer
+    function receiveRequestFromPeer(conn){
+        console.log("in receiveRequestFromPeer");
+        //setConnectionStatus(true);
+        that.conn = conn;
+
+        that.conn.on('open', function () {
+            console.log("on open in peer");
+            setConnectionStatus(true);
+        });
+
+        that.conn.on('data', function (data) {
+            console.log(data);
+            if(!that.isConnected){
+                setConnectionStatus(true);
+            }
+            handleResponse(data);
+        });
+        that.conn.on('close', function (err) {
+            setConnectionStatus(false);
+        });
+
+        that.conn.on('error', function (err) {
+            console.log("Connection error: " + err);
+        });
     }
 
     // takes a boolean representing if the peer is connected or not

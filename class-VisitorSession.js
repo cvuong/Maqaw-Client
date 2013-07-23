@@ -34,7 +34,7 @@ function MaqawVisitorSession(manager) {
     // don't include a connection id so that no connection is started from this end. Leave
     // it to the rep to start a connection
     chatSessionContainer.innerHTML = '';
-    this.chatSession = new MaqawChatSession(chatSessionContainer, that.maqawManager.peer, 'src', 'dst');
+    this.chatSession = new MaqawChatSession(chatSessionContainer, that.maqawManager.peer, 'You', this.maqawManager.chatName);
 
     // add footer
     var chatFooter;
