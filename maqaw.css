@@ -109,8 +109,13 @@
     bottom: 0;
 }
 
-.maqaw-chat-entry {
-    width: 238px !important;
+
+
+textarea.maqaw-chat-entry {
+    padding: 3px;
+    color: black;
+    background-color: white;
+    width: 235px !important;
     height: 20px !important;
     margin: 2px !important;
     resize: none !important;
@@ -179,7 +184,7 @@
     padding-top: 20px !important;
 }
 
-input[type="text"]{
+input[type="text"]#maqaw-login-user-field{
     margin: 8px 0 0 20px !important;
     padding: 3px !important;
     border: 1px solid grey !important;
@@ -190,13 +195,13 @@ input[type="text"]{
     height: 15px !important;
 }
 
-input[type="text"]:focus {
+input[type="text"]:focus#maqaw-login-user-field {
     box-shadow: 0 0 10px lightblue !important;
     -moz-box-shadow: 0 0 10px lightblue !important;
     -webkit-box-shadow: 0 0 10px lightblue !important;
 }
 
-input[type="password"]{
+input[type="password"]#maqaw-login-password-field{
     margin: 8px 0 0 20px !important;
     padding: 3px !important;
     border: 1px solid grey !important;
@@ -206,7 +211,8 @@ input[type="password"]{
     width: 200px !important;
     height: 15px !important;
 }
-input[type="password"]:focus {
+0
+input[type="password"]:focus#maqaw-login-password-field {
     box-shadow: 0 0 10px lightblue !important;
     -moz-box-shadow: 0 0 10px lightblue !important;
     -webkit-box-shadow: 0 0 10px lightblue !important;

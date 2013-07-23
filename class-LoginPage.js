@@ -43,7 +43,7 @@ function MaqawLoginPage(manager) {
     var usernameField = document.createElement("input");
     usernameField.setAttribute('type', "text");
     usernameField.setAttribute('name', "username");
-    usernameField.setAttribute('size', "31");
+    usernameField.setAttribute('id', "maqaw-login-user-field");
     usernameField.setAttribute('placeholder', 'username');
     usernameField.value = user;
     this.body.appendChild(usernameField);
@@ -51,7 +51,7 @@ function MaqawLoginPage(manager) {
     var passwordField = document.createElement("input");
     passwordField.setAttribute('type', "password");
     passwordField.setAttribute('name', "password");
-    passwordField.setAttribute('size', "31");
+    passwordField.setAttribute('id', "maqaw-login-password-field");
     passwordField.setAttribute('placeholder', 'password');
     passwordField.value = password;
     this.body.appendChild(passwordField);
