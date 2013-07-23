@@ -126,6 +126,9 @@ function MaqawManager(options, display) {
         }
 
         // otherwise reload the rep session
+        if(!that.loginPage){
+            that.loginPage = new MaqawLoginPage(that);
+        }
         that.loginPage.loginWithParams(loginCookie);
         that.loadPreviousRepSession = true;
         return true;
