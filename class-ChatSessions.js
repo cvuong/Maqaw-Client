@@ -2,15 +2,11 @@
  Creates a chat window with a unique key to talk
  to a visitor.
  */
-function MaqawChatSession(chatSessionContainer, peer, srcName, dstName, dstId, connectionCallback) {
-
+function MaqawChatSession(chatSessionContainer, sendTextFunction, srcName, dstName) {
+    var that = this;
     this.srcName = srcName;
     this.dstName = dstName;
-    this.dstId = dstId;
-    var that = this;
-    this.peer = peer;
-    this.isConnected = false;
-    this.conn;
+
 
     // whether or not the chat session should allow a rep to send a message
     // this will be updated based on the connection status with the visitor
@@ -124,80 +120,7 @@ function MaqawChatSession(chatSessionContainer, peer, srcName, dstName, dstId, c
         }
     };
 
-    /* Set up peerjs connection handling for this chat session */
-    this.peer.on('connection', receiveRequestFromPeer);
-    function connect(c) {
-        console.log("in connect");
-        setConnectionStatus(true);
-        that.conn = c;
-        that.conn.on('data', function (data) {
-            console.log(data);
-            handleResponse(data);
-        });
-        that.conn.on('close', function (err) {
-            setConnectionStatus(false);
-        });
 
-
-    }
-
-    // An on Connection event that was triggered by receiving a connection from a peer
-    function receiveRequestFromPeer(conn) {
-        console.log("in receiveRequestFromPeer");
-        //setConnectionStatus(true);
-        that.conn = conn;
-
-        that.conn.on('open', function () {
-            console.log("on open in peer");
-            setConnectionStatus(true);
-        });
-
-        that.conn.on('data', function (data) {
-            console.log(data);
-            if (!that.isConnected) {
-                setConnectionStatus(true);
-            }
-            handleResponse(data);
-        });
-        that.conn.on('close', function (err) {
-            setConnectionStatus(false);
-        });
-
-        that.conn.on('error', function (err) {
-            console.log("Connection error: " + err);
-        });
-    }
-
-    // takes a boolean representing if the peer is connected or not
-    // updates the setting, and turns off the text input box if
-    // a connection is not active. Calls a connectionCallback as well
-    // if one was provided
-    function setConnectionStatus(connectionStatus) {
-        that.isConnected = connectionStatus;
-        console.log("Setting connection status to " + connectionStatus);
-
-        // change status of text input depending on connection
-        if (connectionStatus) {
-            allowMessages();
-        } else {
-            disallowMessages();
-        }
-
-        if (that.connectionCallback) {
-            that.connectionCallback(connectionStatus);
-        }
-    }
-
-    this.getIsConnected = function () {
-        return that.isConnected;
-    };
-
-    // if the connection is open, close it
-    this.disconnect = function () {
-        if (that.isConnected) {
-            conn.close();
-        }
-    };
 
     // the allowMessageSending flag tells the chatsession whether or not they
     // should let the rep send messages to the client. This should be disallowed

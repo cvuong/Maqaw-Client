@@ -9,6 +9,10 @@ function MaqawVisitorSession(manager) {
     // Whether or not there is a rep available to chat
     this.isRepAvailable = false;
 
+    // the status of our connection with a peer. True for open and false for closed
+    // Defaults to false until we can verify that a connection has been opened
+    this.connectionStatus = false;
+
     // initialize header container for this session
     this.header = document.createElement('DIV');
     this.header.className = 'maqaw-default-client-header';
@@ -29,12 +33,62 @@ function MaqawVisitorSession(manager) {
     var chatSessionContainer = document.createElement("DIV");
     this.visitorChatWindow.appendChild(chatSessionContainer);
 
-
     // create MaqawChatSession
     // don't include a connection id so that no connection is started from this end. Leave
     // it to the rep to start a connection
     chatSessionContainer.innerHTML = '';
-    this.chatSession = new MaqawChatSession(chatSessionContainer, that.maqawManager.peer, 'You', this.maqawManager.chatName);
+    this.chatSession = new MaqawChatSession(chatSessionContainer, sendText, 'You', this.maqawManager.chatName);
+
+    // set up a connection listener to wait for a rep to make a connection with us
+    this.connection;
+    this.maqawManager.connectionManager.setConnectionListener(connectionListener, dataCallback, connectionCallback);
+
+    /*
+     * If another peer connects to us, this function will be called with the MaqawConnection
+     * object as an argument
+     */
+    function connectionListener(maqawConnection) {
+        // if another connection already exists, something probably went wrong
+        if (that.connection) {
+            console.log("Error: Overwriting existing connection");
+        }
+        // save the new connection
+        that.connection = maqawConnection;
+    }
+
+    /*
+     * For a connection received from the connectionListener, this function will be called by the connection
+     * when data is received through the connection
+     */
+    function dataCallback(data) {
+        // handle text
+        if (data.text) {
+            that.chatSession.newTextReceived(data.text);
+        }
+    }
+
+    /*
+     * For a connection received from the connectionListener, this function will be called by the connection
+     * whenever the status of the connection changes. The connection status will be passed,
+     * with true representing an open connection and false representing closed.
+     */
+    function connectionCallback(connectionStatus) {
+        console.log("Visitor Session connection status: "+connectionStatus);
+        that.connectionStatus = connectionStatus;
+    }
+
+    /*
+     * This function is passed to the Chat Session. The session will call it whenever it has text
+     * to send to the peer.
+     */
+    function sendTextFromChat(text) {
+        if (!that.connection || !that.connection.isConnected()) {
+            console.log("Error: Cannot send text. Bad connection");
+        } else {
+            that.connection.sendText(text);
+        }
+    }
+
 
     // add footer
     var chatFooter;
@@ -118,9 +172,9 @@ function MaqawVisitorSession(manager) {
      Updates whether or not their is an available rep for the visitor to chat with.
      Pass in true if there is a rep available or false otherwise.
      */
-    this.setIsRepAvailable = function(isRepAvailable){
-        if(isRepAvailable !== that.isRepAvailable){
-            if(isRepAvailable) {
+    this.setIsRepAvailable = function (isRepAvailable) {
+        if (isRepAvailable !== that.isRepAvailable) {
+            if (isRepAvailable) {
                 setClientChat();
             }
             else {
@@ -131,9 +185,8 @@ function MaqawVisitorSession(manager) {
     };
 
 
-
     // returns an object containing the data that constitutes this visitors session
-    this.getSessionData = function() {
+    this.getSessionData = function () {
         return {
             chatText: that.chatSession.getText()
         };
@@ -141,7 +194,7 @@ function MaqawVisitorSession(manager) {
 
     // takes an visitor session data object (from getSessionData) and loads this visitor
     // session with it
-    this.loadSessionData = function(sessionData) {
+    this.loadSessionData = function (sessionData) {
         that.chatSession.setText(sessionData.chatText);
     }
 }

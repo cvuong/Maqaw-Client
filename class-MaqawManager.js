@@ -36,7 +36,7 @@ function MaqawManager(options, display) {
     /* listen for peer js events */
     this.peer.on('open', function (id) {
         that.id = id;
-        console.log("My id: "+id);
+        console.log("My id: " + id);
 
         maqawCookies.setItem('peerId', id, Infinity);
 
@@ -48,20 +48,19 @@ function MaqawManager(options, display) {
         that.repSession && that.repSession.updateVisitorList(visitors.msg);
     });
 
-    this.peer.on('clients', function (visitors) {
-        console.log("second on clients!");
-    });
-
     this.peer.on('representatives', function (reps) {
         console.log('Reps: ' + reps.msg);
         that.representatives = reps.msg;
         updateReps();
     });
 
+    // create a connection manager
+    this.connectionManager = new MaqawConnectionManager(this.peer);
+
     // function called the VisitorSession when the login button is clicked
     this.loginClicked = function () {
         // create and display a new LoginPage object if one doesn't already exist
-        if(!that.loginPage){
+        if (!that.loginPage) {
             that.loginPage = new MaqawLoginPage(that);
         }
         that.maqawDisplay.setHeaderContents(that.loginPage.getHeaderContents());
@@ -130,7 +129,7 @@ function MaqawManager(options, display) {
         }
 
         // otherwise reload the rep session
-        if(!that.loginPage){
+        if (!that.loginPage) {
             that.loginPage = new MaqawLoginPage(that);
         }
         that.loginPage.loginWithParams(loginCookie);
