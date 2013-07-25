@@ -3,13 +3,14 @@
  listDisplayContainer - The div that will contain the table of visitors
  chatManager - the ChatManager object that will manage chat sessions
  */
-function MaqawVisitorList(listDisplayContainer, chatManager, maqawManager) {
+function MaqawVisitorList(listDisplayContainer, repSession) {
     var that = this;
     // hashmap of all visitors on the site. Their id is the key, and their visitor object the value
     this.visitors = {};
     this.listDisplayContainer = listDisplayContainer;
-    this.chatManager = chatManager;
-    this.maqawManager = maqawManager;
+    this.chatManager = repSession.chatManager;
+    this.maqawManager = repSession.maqawManager;
+    this.repSession = repSession;
     // a visitor wrapper object representing the visitor that is selected in the table
     this.selectedVisitor;
     this.visitorCounter = 1;
@@ -102,7 +103,7 @@ function MaqawVisitorList(listDisplayContainer, chatManager, maqawManager) {
         if (that.selectedVisitor && that.selectedVisitor === visitorWrapper) {
             that.selectedVisitor = undefined;
         }
-    }
+    };
 
     // return the an object representing the state of this visitorList
     this.getListData = function () {
@@ -118,12 +119,12 @@ function MaqawVisitorList(listDisplayContainer, chatManager, maqawManager) {
                 isSelected: visitorWrapper.isSelected,
                 rowIndex: visitorWrapper.row.rowIndex,
                 chatText: visitorWrapper.visitor.getChatSession().getText()
-            }
+            };
             data[counter] = visitorData;
             counter++;
         }
         return data;
-    }
+    };
 
     // load a state represented by an object from getListData
     this.loadListData = function (listData) {
@@ -141,7 +142,7 @@ function MaqawVisitorList(listDisplayContainer, chatManager, maqawManager) {
             // ideally we would like the visitors to show up in the same order in the table, but right now
             // we just append it to the end by passing rowIndex of -1
 
-            var visitorWrapper = new MaqawVisitorWrapper(dataObject['id'], dataObject['name'], that, -1);
+            var visitorWrapper = new MaqawVisitorWrapper(dataObject['id'], dataObject['name'], that);
 
             if(dataObject['isSelected']) {
                 that.selectedVisitor = visitorWrapper;
@@ -154,140 +155,5 @@ function MaqawVisitorList(listDisplayContainer, chatManager, maqawManager) {
             // save this visitor in the list
             that.visitors[visitorWrapper.getId()] = visitorWrapper;
         }
-    }
-}
-
-
-// this wrapper class monitors the status of a visitor
-
-function MaqawVisitorWrapper(id, name, visitorList, rowIndex) {
-    var that = this;
-    this.visitorList = visitorList;
-
-    // whether or not this visitor is connected to the peerserver. This will fluctuate briefly
-    // if they change or reload pages. If that happens we need to tell the chat session to restart
-    // its connection with this visitor
-    this.isConnectedToServer = true;
-
-    // the status of the chat session's connection with the visitor. This is subtly different
-    // from the visitors connection with the server. The server will
-    // immediately detect if the visitor changes pages, however, the chat
-    // connection takes five seconds to notice.
-    this.isChatConnected = false;
-
-
-    this.visitor = new MaqawVisitor(this.visitorList.maqawManager, name, id, visitorConnectionCallback);
-
-    // create row to display this visitor in the table
-    this.row = visitorList.table.insertRow(rowIndex);
-    this.row.className = 'maqaw-visitor-list-entry';
-    // the row contains a single cell containing the visitor name
-    var cell = document.createElement("td");
-    var cellText = document.createTextNode(this.visitor.name);
-    cell.appendChild(cellText);
-    this.row.appendChild(cell);
-
-    // append row to the visitor table
-    this.visitorList.tBody.appendChild(this.row);
-
-    this.isSelected = false;
-
-    // append click listener to row
-    this.row.addEventListener('click', clickCallBack, false);
-    function clickCallBack() {
-        that.visitorList.setSelectedVisitor(that);
-    }
-
-
-    // set the row to be hidden at first until it's visitor's chat session is established
-    hide();
-
-    // this visitor's row in the table is set to selected
-    this.select = function () {
-        that.isSelected = true;
-        // change class to selected
-        that.row.className = 'maqaw-selected-visitor';
-        // show visitor chat window
-        that.visitorList.chatManager.showVisitorChat(that.visitor)
-    };
-
-    // the row is set to deselected
-    this.deselect = function () {
-        that.isSelected = false;
-        // change class to default
-        that.row.className = 'maqaw-visitor-list-entry';
-        // clear chat window
-        that.visitorList.chatManager.clear(that.visitor);
-    };
-
-    this.getVisitor = function () {
-        return that.visitor;
-    };
-
-    this.getId = function () {
-        return that.visitor.getId();
-    };
-
-    // whether or not this visitor is connected to the server.
-    this.getIsConnected = function () {
-        return that.isConnectedToServer;
-    };
-
-    // tells the visitors chat session to open it's connection. The chat session will
-    // only do this if it's connection has been closed. if it succeeds in reopening the
-    // connection it will call the visitorConnectionCallback function
-    this.openConnection = function () {
-        that.visitor.getChatSession().openConnection();
-    };
-
-    // set whether or not this visitor is connected to the peer server
-    this.setServerConnectionStatus = function (isConnected) {
-        // if the visitor switched from disconnected to connected, tell the chat session
-        // to reconnect with the visitor
-        if (!that.isConnectedToServer && isConnected) {
-            that.visitor.getChatSession().openConnection();
-        }
-
-        // save the connection status
-        that.isConnectedToServer = isConnected;
-
-        // if they are disconnected, tell the chat session to disallow sending messages
-        updateChatSending();
-    };
-
-    // tells the chat session whether or not they should allow messages to be sent by the rep
-    // if either the visitor is not currently connected to the server, or the chat connection
-    // is broken, messages should be prevented
-    function updateChatSending() {
-        that.visitor.chatSession.setAllowMessageSending(that.isConnectedToServer && that.isChatConnected);
-    }
-
-    // the visitor's chat session calls this function whenever the chat connection
-    // status changes. A bool representing the new status is passed in, with true for
-    // connected and false for disconnected
-    function visitorConnectionCallback(isConnected) {
-        that.isChatConnected = isConnected;
-        updateChatSending();
-
-        // update row display to reflect connection status
-        if (!that.isChatConnected) {
-            hide();
-        } else {
-            show();
-        }
-    }
-
-    function hide() {
-        that.row.style.display = 'none';
-        that.visitorList.hideVisitor(that);
-        that.isSelected = false;
-        // change class to default
-        that.row.className = 'maqaw-visitor-list-entry';
-        // clear chat window
-        that.visitorList.chatManager.clear(that.visitor);
-    }
-
-    function show() {
-        that.row.style.display = 'block';
     }
 }

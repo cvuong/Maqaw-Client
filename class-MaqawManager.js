@@ -171,7 +171,7 @@ function MaqawManager(options, display) {
 
     }
 
-    window.addEventListener('unload', saveSession, false);
+    //window.addEventListener('unload', saveSession, false);
 }
 
 // takes a MaqawVisitorSession object and loads it as the current visitor session

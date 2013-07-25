@@ -24,7 +24,7 @@ function MaqawConnection(peer, dstId, dataCallback, connectionCallback, conn) {
     this.dataCallback = dataCallback;
 
     // whether or not this connection is open. True if open and false otherwise
-    this.connectionStatus = false;
+    this.isConnected = false;
 
     // the peerjs DataConnection object we are using
     this.conn;
@@ -75,11 +75,42 @@ function MaqawConnection(peer, dstId, dataCallback, connectionCallback, conn) {
         that.connectionCallback(connectionStatus);
     }
 
+    function attemptConnection() {
+        // how many milliseconds we will wait until trying to connect again
+        var retryInterval = 8000;
+        var isConnected = false;
+
+        //  The max number of times a connection will be attempted
+        var retryLimit = 5;
+        var numAttempts = 0;
+
+        // this function is called when a successful connection is opened
+        function successCallback() {
+            isConnected = true;
+        }
+
+        // create a function that will attempt to open a connection, and will retry
+        // every retryInterval milliseconds until a connection is established
+        // this function is immediately invoked
+        (function tryOpeningConnection() {
+            // start the connection opening process
+            if (!isConnected && numAttempts < retryLimit) {
+                numAttempts++;
+                that.openConnection(successCallback);
+
+                // schedule it to try again in a bit.
+                setTimeout(tryOpeningConnection, retryInterval);
+            }
+        })();
+
+
+    }
+
     /* Get the connection status.
      * Returns true if the connection is open and false otherwise
      */
     this.isConnected = function () {
-        return that.connectionStatus;
+        return that.isConnected;
     };
 
     /*

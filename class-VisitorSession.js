@@ -1,6 +1,6 @@
 /*
- ClientSession manages client information and interactions
- with Maqaw.
+ VisitorSession manages a visitor's interaction with the Maqaw client. It contains the connection
+ with a representative, and handles all display and transfer of communication with that rep.
  */
 function MaqawVisitorSession(manager) {
     var that = this;
@@ -11,7 +11,7 @@ function MaqawVisitorSession(manager) {
 
     // the status of our connection with a peer. True for open and false for closed
     // Defaults to false until we can verify that a connection has been opened
-    this.connectionStatus = false;
+    this.isConnected = false;
 
     // initialize header container for this session
     this.header = document.createElement('DIV');
@@ -37,17 +37,17 @@ function MaqawVisitorSession(manager) {
     // don't include a connection id so that no connection is started from this end. Leave
     // it to the rep to start a connection
     chatSessionContainer.innerHTML = '';
-    this.chatSession = new MaqawChatSession(chatSessionContainer, sendText, 'You', this.maqawManager.chatName);
+    this.chatSession = new MaqawChatSession(chatSessionContainer, sendTextFromChat, 'You', this.maqawManager.chatName);
 
     // set up a connection listener to wait for a rep to make a connection with us
     this.connection;
-    this.maqawManager.connectionManager.setConnectionListener(connectionListener, dataCallback, connectionCallback);
+    this.maqawManager.connectionManager.setConnectionListener(newConnectionListener, connectionDataCallback, connectionStatusCallback);
 
     /*
      * If another peer connects to us, this function will be called with the MaqawConnection
      * object as an argument
      */
-    function connectionListener(maqawConnection) {
+    function newConnectionListener(maqawConnection) {
         // if another connection already exists, something probably went wrong
         if (that.connection) {
             console.log("Error: Overwriting existing connection");
@@ -57,10 +57,10 @@ function MaqawVisitorSession(manager) {
     }
 
     /*
-     * For a connection received from the connectionListener, this function will be called by the connection
+     * For a connection received from the newConnectionListener, this function will be called by the connection
      * when data is received through the connection
      */
-    function dataCallback(data) {
+    function connectionDataCallback(data) {
         // handle text
         if (data.text) {
             that.chatSession.newTextReceived(data.text);
@@ -68,13 +68,16 @@ function MaqawVisitorSession(manager) {
     }
 
     /*
-     * For a connection received from the connectionListener, this function will be called by the connection
+     * For a connection received from the newConnectionListener, this function will be called by the connection
      * whenever the status of the connection changes. The connection status will be passed,
      * with true representing an open connection and false representing closed.
      */
-    function connectionCallback(connectionStatus) {
+    function connectionStatusCallback(connectionStatus) {
         console.log("Visitor Session connection status: "+connectionStatus);
-        that.connectionStatus = connectionStatus;
+        that.isConnected = connectionStatus;
+
+        // update chat session to reflect connection status
+        that.chatSession.setAllowMessageSending(connectionStatus);
     }
 
     /*
