@@ -29,7 +29,6 @@ function maqawAjaxPost(url, params, callback) {
 
     function ensureReadiness() {
         // post completed
-        
         if(xhr.readyState === 4) {
             callback(xhr);
         }
