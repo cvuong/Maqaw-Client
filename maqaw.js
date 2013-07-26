@@ -16,7 +16,7 @@ maqawManager.startVisitorSession();
 // try to restore a previously logged in rep session if one exists
 
 var maqawRepSessionStarted;
-//maqawRepSessionStart = maqawManager.loadRepSession();
+maqawRepSessionStart = maqawManager.loadRepSession();
 
 // if no rep session could be loaded, display the visitor session
 if(!maqawRepSessionStarted){

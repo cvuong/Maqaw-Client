@@ -27,18 +27,16 @@ function MaqawVisitorList(listDisplayContainer, repSession) {
     // the visitor display is updated accordingly
     // visitorIds - an array of ids of visitors on the site
     this.setVisitorList = function (visitorIds) {
-        if (visitorIds) {
             // go through each id in the list
             for (var i = 0; i < visitorIds.length; i++) {
                 var id = visitorIds[i];
                 // check for a visitor with this id
                 var visitor = that.visitors[id];
                 // if one doesn't exist, create one
-                if (typeof visitor === 'undefined') {
+                if (!visitor) {
                     that.visitors[id] = createNewVisitor(id);
                 }
             }
-        }
     };
 
     // create a new visitor using the specified id, and wrap the visitor in a MaqawVisitorWrapper object
@@ -107,15 +105,12 @@ function MaqawVisitorList(listDisplayContainer, repSession) {
         that.tBody.innerHTML = '';
 
         // set the visitor counter to be the number of visitors stored
-        that.visitorCounter = listData.length;
+        that.visitorCounter = listData.length + 1;
 
         // go through each entry in the list data and restore it
         for(var index in listData){
             var dataObject = listData[index];
             // create and update a visitor using this data
-            // ideally we would like the visitors to show up in the same order in the table, but right now
-            // we just append it to the end by passing rowIndex of -1
-
             var visitor = new MaqawVisitor(dataObject['id'], dataObject['name'], that);
 
             if(dataObject['isSelected']) {

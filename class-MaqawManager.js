@@ -10,6 +10,9 @@ function MaqawManager(options, display) {
     this.key = options.key;
     this.chatName = options.name;
 
+    // list of all visitors connected to the server
+    this.visitor = [];
+
     // this id is used whenever the client makes a connection with peerjs
     this.id = maqawCookies.getItem('peerId');
     // an array of ids of representatives that are available for chat
@@ -28,8 +31,35 @@ function MaqawManager(options, display) {
         this.peer = new Peer({key: this.key, host: host, port: port});
     }
 
-    // create a connection manager
+    // initialize the connection manager
     this.connectionManager = new MaqawConnectionManager(this.peer);
+
+    /* listen for peer js events */
+    this.peer.on('open', function (id) {
+        console.log("My id: " + id);
+        maqawCookies.setItem('peerId', id, Infinity);
+    });
+
+    this.peer.on('clients', function (visitors) {
+        console.log('visitors: ' + visitors.msg);
+        that.visitors = visitors.msg;
+        that.handleVisitorList(that.visitors);
+    });
+
+    this.peer.on('representatives', function (reps) {
+        console.log('Reps: ' + reps.msg);
+        that.representatives = reps.msg;
+    });
+
+    /*
+     * Receives an array of visitors from the Peer Server and passes
+     * the information along to VisitorList and ConnectionManager
+     */
+    this.handleVisitorList = function (visitors) {
+        that.repSession && that.repSession.visitorList.setVisitorList(visitors);
+        that.connectionManager.setVisitors(visitors);
+    };
+
 
     // function called the VisitorSession when the login button is clicked
     this.loginClicked = function () {
@@ -81,7 +111,7 @@ function MaqawManager(options, display) {
             var storedSessionData = JSON.parse(localStorage.getItem('maqawRepSession'));
             // if previous data was found load it into the repSession
             if (storedSessionData) {
-                that.repSession.loadSessionData(storedSessionData);
+                //that.repSession.loadSessionData(storedSessionData);
             }
         }
 

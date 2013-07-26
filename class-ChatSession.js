@@ -89,7 +89,7 @@ function MaqawChatSession(chatSessionContainer, sendTextFunction, srcName, dstNa
     };
 
     /*
-     * Whether or the the chat session should allow the user to send text. If set to true
+     * Whether or not the the chat session should allow the user to send text. If set to true
      * they can send text normally. If set to false the text input box is disabled
      */
     this.setAllowMessageSending = function (allowMessageSending) {

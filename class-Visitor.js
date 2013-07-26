@@ -13,15 +13,41 @@ function MaqawVisitor(id, name, repSession) {
     this.id = id;
     this.name = name;
 
+    /* Set up visitor display row in table */
+    // create row to display this visitor in the table
+    this.row = this.visitorList.table.insertRow(-1);
+    this.row.className = 'maqaw-visitor-list-entry';
+    // the row contains a single cell containing the visitor name
+    var cell = document.createElement("td");
+    var cellText = document.createTextNode(this.name);
+    cell.appendChild(cellText);
+    this.row.appendChild(cell);
+
+    // append row to the visitor table
+    this.visitorList.tBody.appendChild(this.row);
+
+    this.isSelected = false;
+
+    // append click listener to row
+    this.row.addEventListener('click', clickCallBack, false);
+    function clickCallBack() {
+        that.visitorList.setSelectedVisitor(that);
+    }
+
+    // set the row to be hidden at first until it's visitor's chat session is established
+    hide();
+
+    /* ************************************* */
+
     // whether or not we have an open connection with this visitor. Default to false
     // until we can verify a connection is open
     this.isConnected = false;
 
-    // create a new connection
-    this.connection = this.repSession.maqawManager.connectionManager.newConnection(this.id, connectionDataCallback, connectionStatusCallback);
-
     // each visitor has a unique chat session
     this.chatSession = new MaqawChatSession(document.createElement("DIV"), sendTextFromChat, 'You', this.name);
+
+    // create a new connection
+    this.connection = this.repSession.maqawManager.connectionManager.newConnection(this.id, connectionDataCallback, connectionStatusCallback, true);
 
     /*
      * This function is passed to the chat session, which calls it every time it has text
@@ -62,28 +88,7 @@ function MaqawVisitor(id, name, repSession) {
         }
     }
 
-    // create row to display this visitor in the table
-    this.row = this.visitorList.table.insertRow(-1);
-    this.row.className = 'maqaw-visitor-list-entry';
-    // the row contains a single cell containing the visitor name
-    var cell = document.createElement("td");
-    var cellText = document.createTextNode(this.name);
-    cell.appendChild(cellText);
-    this.row.appendChild(cell);
 
-    // append row to the visitor table
-    this.visitorList.tBody.appendChild(this.row);
-
-    this.isSelected = false;
-
-    // append click listener to row
-    this.row.addEventListener('click', clickCallBack, false);
-    function clickCallBack() {
-        that.visitorList.setSelectedVisitor(that);
-    }
-
-    // set the row to be hidden at first until it's visitor's chat session is established
-    hide();
 
     /*
      * Change the row that displays this visitor to reflect that it's been selected.

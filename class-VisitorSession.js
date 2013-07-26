@@ -86,7 +86,7 @@ function MaqawVisitorSession(manager) {
      * to send to the peer.
      */
     function sendTextFromChat(text) {
-        if (!that.connection || !that.connection.isConnected()) {
+        if (!that.connection || !that.connection.isConnected) {
             console.log("Error: Cannot send text. Bad connection");
         } else {
             that.connection.sendText(text);

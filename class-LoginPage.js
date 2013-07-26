@@ -6,8 +6,8 @@
 function MaqawLoginPage(manager) {
     var that = this;
     var loginEndpoint = 'http://54.214.232.157:3000/login';
-    var email = 'test@test.com';
-    var password = 'test';
+    var email = 'konakid@gmail.com';
+    var password = 'asdfasdf';
 
     this.maqawManager = manager;
     /* Create elements that make up the login page */
