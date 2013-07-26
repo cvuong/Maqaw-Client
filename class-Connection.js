@@ -55,7 +55,7 @@ function MaqawConnection(peer, dstId, conn) {
     function handleData(data) {
         // for now we are just sending text
       var i, dataLen = that.dataDirectives.length;
-      for (var i = 0; i < dataLen; i ++) {
+      for (i = 0; i < dataLen; i ++) {
         that.dataDirectives[i](data); 
       }
     }
