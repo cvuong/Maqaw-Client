@@ -1,8 +1,3 @@
-/**
- * Created By: Eli
- * Date: 7/24/13
- */
-
 /*
  * The ConnectionManager keeps track of existing connections and assists in creating
  * new connections. You can explicitly create a new connection, or set a listener
@@ -13,10 +8,28 @@
 function MaqawConnectionManager(peer) {
     var that = this;
     this.peer = peer;
+    this.visitors;
+    this.representatives;
 
     // a list of all current connections, where the key is the connecting peer id
     // and the value is the MaqawConnection object
     this.connectionList = {};
+
+    /* listen for peer js events */
+    this.peer.on('open', function (id) {
+        console.log("My id: " + id);
+        maqawCookies.setItem('peerId', id, Infinity);
+    });
+
+    this.peer.on('clients', function (visitors) {
+        console.log('visitors: ' + visitors.msg);
+        that.visitors = visitors.msg;
+    });
+
+    this.peer.on('representatives', function (reps) {
+        console.log('Reps: ' + reps.msg);
+        that.representatives = reps.msg;
+    });
 
 
     /* Set a callback function that will be called if a connection
@@ -27,7 +40,7 @@ function MaqawConnectionManager(peer) {
         // use the peer onConnection event to listen for connections
         that.peer.on('connection', function (conn) {
             // when a peer connection is opened, use it to set up a MaqawConnection
-            var maqawConnection = new MaqawConnection(that, dataCallback, connectionCallback, conn);
+            var maqawConnection = new MaqawConnection(that.peer, null, dataCallback, connectionCallback, conn);
             // return the new connection to the callback listener
             connectionListener(maqawConnection);
         });

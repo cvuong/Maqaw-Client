@@ -13,17 +13,12 @@ function MaqawManager(options, display) {
     // this id is used whenever the client makes a connection with peerjs
     this.id = maqawCookies.getItem('peerId');
     // an array of ids of representatives that are available for chat
-    this.representatives;
     this.maqawDisplay = display;
     this.visitorSession;
     this.repSession;
 
     // a MaqawLoginPage object that can be used to login with rep details
     this.loginPage;
-
-    // the most recent list of visitors from the server
-    this.visitors = [];
-
 
     if (this.id) {
         //  peer id has been stored in the browser. Use it
@@ -32,27 +27,6 @@ function MaqawManager(options, display) {
         //  No peer id cookie found. Retrieve new id from browser
         this.peer = new Peer({key: this.key, host: host, port: port});
     }
-
-    /* listen for peer js events */
-    this.peer.on('open', function (id) {
-        that.id = id;
-        console.log("My id: " + id);
-
-        maqawCookies.setItem('peerId', id, Infinity);
-
-    });
-
-    this.peer.on('clients', function (visitors) {
-        console.log('visitors: ' + visitors.msg);
-        that.visitors = visitors.msg;
-        that.repSession && that.repSession.updateVisitorList(visitors.msg);
-    });
-
-    this.peer.on('representatives', function (reps) {
-        console.log('Reps: ' + reps.msg);
-        that.representatives = reps.msg;
-        updateReps();
-    });
 
     // create a connection manager
     this.connectionManager = new MaqawConnectionManager(this.peer);
@@ -135,13 +109,7 @@ function MaqawManager(options, display) {
         that.loginPage.loginWithParams(loginCookie);
         that.loadPreviousRepSession = true;
         return true;
-    }
-
-
-    // updates the status of the available reps for visitor chat
-    function updateReps() {
-        that.visitorSession.setIsRepAvailable(that.representatives.length !== 0);
-    }
+    };
 
     // setup an event listener for when the page is changed so that we can save the
     // visitor session
@@ -171,13 +139,9 @@ function MaqawManager(options, display) {
 
     }
 
+    // Add listener to save session state on exit so it can be reloaded later.
     //window.addEventListener('unload', saveSession, false);
 }
-
-// takes a MaqawVisitorSession object and loads it as the current visitor session
-MaqawManager.prototype.setVisitorSession = function (visitorSession) {
-    this.visitorSession = visitorSession;
-};
 
 
 

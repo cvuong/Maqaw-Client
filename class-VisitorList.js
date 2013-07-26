@@ -5,13 +5,13 @@
  */
 function MaqawVisitorList(listDisplayContainer, repSession) {
     var that = this;
-    // hashmap of all visitors on the site. Their id is the key, and their visitor object the value
+    // hash of all visitors on the site. Their id is the key, and their visitor object the value
     this.visitors = {};
     this.listDisplayContainer = listDisplayContainer;
     this.chatManager = repSession.chatManager;
     this.maqawManager = repSession.maqawManager;
     this.repSession = repSession;
-    // a visitor wrapper object representing the visitor that is selected in the table
+    // a visitor object representing the visitor that is selected in the table
     this.selectedVisitor;
     this.visitorCounter = 1;
 
@@ -35,72 +35,46 @@ function MaqawVisitorList(listDisplayContainer, repSession) {
                 var visitor = that.visitors[id];
                 // if one doesn't exist, create one
                 if (typeof visitor === 'undefined') {
-                    that.visitors[id] = createNewVisitorWithWrapper(id);
+                    that.visitors[id] = createNewVisitor(id);
                 }
-                // otherwise make sure the visitor has an open connection
-                else if (!visitor.getIsConnected()) {
-                    visitor.setServerConnectionStatus(true);
-                }
-
-            }
-        }
-
-        // check for current connections that are no longer active
-        // Ff the connection is marked as active but we didnt' get an id
-        // for it from the server it means the peer disconnected
-        // this could be just a page change or refresh, but the connection
-        // will be re-established when they make connect with the server again
-        // TODO: More efficient way of finding disconnected peers
-        for (var visitorId in that.visitors) {
-            var isConnected = false;
-            for (i = 0; i < visitorIds.length; i++) {
-                if (visitorId === visitorIds[i]) {
-                    isConnected = true;
-                    break;
-                }
-            }
-
-            // if there are no matching ids for this visitor we need to disconnect them
-            if (!isConnected) {
-                that.visitors[visitorId].setServerConnectionStatus(false);
             }
         }
     };
 
     // create a new visitor using the specified id, and wrap the visitor in a MaqawVisitorWrapper object
     // to help manage selecting and displaying the visitor
-    function createNewVisitorWithWrapper(id) {
+    function createNewVisitor(id) {
         var visitorName = 'Visitor ' + that.visitorCounter;
         that.visitorCounter++;
         // use rowIndex of -1 so the row is added at the end of the table
-        return new MaqawVisitorWrapper(id, visitorName, that, -1);
+        return new MaqawVisitor(id, visitorName, that.repSession);
     }
 
-    this.setSelectedVisitor = function (visitorWrapper) {
+    this.setSelectedVisitor = function (visitor) {
         // deselect previously selected row, if there is one
         if (that.selectedVisitor) {
             that.selectedVisitor.deselect();
 
             // if the previously selected visitor was selected again, leave it deselected
-            if (that.selectedVisitor === visitorWrapper) {
+            if (that.selectedVisitor === visitor) {
                 that.selectedVisitor = undefined;
                 return;
             }
         }
 
         // set new visitor to be selected
-        visitorWrapper.select();
+        visitor.select();
 
         // save visitor
-        that.selectedVisitor = visitorWrapper;
+        that.selectedVisitor = visitor;
     };
 
 
     // a visitorwrapper calls this to tell the MaqawVisitorList that it is going inactive
     // the visitor list needs to make sure that it doesn't have this visitor set
     // as selected
-    this.hideVisitor = function (visitorWrapper) {
-        if (that.selectedVisitor && that.selectedVisitor === visitorWrapper) {
+    this.hideVisitor = function (visitor) {
+        if (that.selectedVisitor && that.selectedVisitor === visitor) {
             that.selectedVisitor = undefined;
         }
     };
@@ -142,7 +116,7 @@ function MaqawVisitorList(listDisplayContainer, repSession) {
             // ideally we would like the visitors to show up in the same order in the table, but right now
             // we just append it to the end by passing rowIndex of -1
 
-            var visitorWrapper = new MaqawVisitorWrapper(dataObject['id'], dataObject['name'], that);
+            var visitorWrapper = new MaqawVisitor(dataObject['id'], dataObject['name'], that);
 
             if(dataObject['isSelected']) {
                 that.selectedVisitor = visitorWrapper;

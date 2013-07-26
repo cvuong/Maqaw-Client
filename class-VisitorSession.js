@@ -6,8 +6,6 @@ function MaqawVisitorSession(manager) {
     var that = this;
     this.chatSession;
     this.maqawManager = manager;
-    // Whether or not there is a rep available to chat
-    this.isRepAvailable = false;
 
     // the status of our connection with a peer. True for open and false for closed
     // Defaults to false until we can verify that a connection has been opened
@@ -32,11 +30,6 @@ function MaqawVisitorSession(manager) {
     // add chat session
     var chatSessionContainer = document.createElement("DIV");
     this.visitorChatWindow.appendChild(chatSessionContainer);
-
-    // create MaqawChatSession
-    // don't include a connection id so that no connection is started from this end. Leave
-    // it to the rep to start a connection
-    chatSessionContainer.innerHTML = '';
     this.chatSession = new MaqawChatSession(chatSessionContainer, sendTextFromChat, 'You', this.maqawManager.chatName);
 
     // set up a connection listener to wait for a rep to make a connection with us
@@ -78,6 +71,14 @@ function MaqawVisitorSession(manager) {
 
         // update chat session to reflect connection status
         that.chatSession.setAllowMessageSending(connectionStatus);
+
+        // show a different page if there is no connection with a rep
+        if (connectionStatus) {
+            setClientChat();
+        }
+        else {
+            setNoRepPage();
+        }
     }
 
     /*
@@ -170,23 +171,6 @@ function MaqawVisitorSession(manager) {
         that.header.innerHTML = '';
         that.header.appendChild(that.noRepHeader);
     }
-
-    /*
-     Updates whether or not their is an available rep for the visitor to chat with.
-     Pass in true if there is a rep available or false otherwise.
-     */
-    this.setIsRepAvailable = function (isRepAvailable) {
-        if (isRepAvailable !== that.isRepAvailable) {
-            if (isRepAvailable) {
-                setClientChat();
-            }
-            else {
-                setNoRepPage();
-            }
-        }
-        this.isRepAvailable = isRepAvailable;
-    };
-
 
     // returns an object containing the data that constitutes this visitors session
     this.getSessionData = function () {

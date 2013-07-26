@@ -19,7 +19,6 @@
 function MaqawConnection(peer, dstId, dataCallback, connectionCallback, conn) {
     var that = this;
     this.peer = peer;
-    this.dstId = dstId;
     this.connectionCallback = connectionCallback;
     this.dataCallback = dataCallback;
 
@@ -33,7 +32,7 @@ function MaqawConnection(peer, dstId, dataCallback, connectionCallback, conn) {
     if (conn) {
         this.conn = conn;
     } else {
-        this.conn = this.peer.connect(this.dstId);
+        this.conn = this.peer.connect(dstId);
     }
 
     // check the current status of the connection. It may already be open if one was passed in
@@ -71,8 +70,8 @@ function MaqawConnection(peer, dstId, dataCallback, connectionCallback, conn) {
      * the connectionListener
      */
     function setConnectionStatus(connectionStatus) {
-        that.isConnected = connectionStatus;
-        that.connectionCallback(connectionStatus);
+        that.isConnected = Boolean(connectionStatus);
+        that.connectionCallback(that.isConnected);
     }
 
     function attemptConnection() {

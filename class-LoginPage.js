@@ -45,7 +45,9 @@ function MaqawLoginPage(manager) {
     emailField.setAttribute('name', "email");
     emailField.setAttribute('size', "31");
     emailField.setAttribute('placeholder', 'email');
-    //emailField.value = email;
+    if(maqawDebug){
+        emailField.value = email;
+    }
     this.body.appendChild(emailField);
 
     var passwordField = document.createElement("input");
@@ -53,7 +55,9 @@ function MaqawLoginPage(manager) {
     passwordField.setAttribute('name', "password");
     passwordField.setAttribute('id', "maqaw-login-password-field");
     passwordField.setAttribute('placeholder', 'password');
-    //passwordField.value = password;
+    if(maqawDebug){
+        passwordField.value = password;
+    }
     this.body.appendChild(passwordField);
 
 // submit button
