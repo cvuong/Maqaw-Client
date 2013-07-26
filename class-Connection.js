@@ -17,12 +17,17 @@
  * conn - Optional. This is a peerjs DataConnection object. If included, the MaqawConnection will use it
  *      instead of creating a new one.
  */
-function MaqawConnection(peer, dstId, dataCallback, connectionCallback, attemptReconnect, conn) {
+function MaqawConnection(peer, dstId, attemptReconnect, conn) {
     var that = this;
     this.peer = peer;
     this.dstId = dstId;
-    this.connectionCallback = connectionCallback;
-    this.dataCallback = dataCallback;
+    
+    //  Callback arrays //
+    this.closeDirectives = [];  this.openDirectives = [];
+    this.dataDirectives = []; this.errorDirectives = []; 
+    this.changeDirectives = [];
+    //          
+
     this.attempReconnect = attemptReconnect;
 
     // whether or not this connection is open. True if open and false otherwise
@@ -44,35 +49,17 @@ function MaqawConnection(peer, dstId, dataCallback, connectionCallback, attemptR
 
     // check the current status of the connection. It may already be open if one was passed in
     setConnectionStatus(this.conn.open);
-    setConnectionCallbacks();
-    // attach event listeners to our connection
-    function setConnectionCallbacks() {
-        // set up connection events for the connection
-        that.conn.on('open', function () {
-            setConnectionStatus(true);
-        });
-
-        that.conn.on('data', function (data) {
-            // if we are receiving data the connection is definitely open
-            setConnectionStatus(true);
-            handleData(data);
-        });
-        that.conn.on('close', function (err) {
-            setConnectionStatus(false);
-        });
-
-        that.conn.on('error', function (err) {
-            console.log("Connection error: " + err);
-        });
-    }
-
+    
     /*
      * Handle data that was received by this connection. Extract any meta data we need
      * and pass the rest of it on to the data callback
      */
     function handleData(data) {
         // for now we are just sending text
-        that.dataCallback(data);
+      var i, dataLen = that.dataDirectives.length;
+      for (var i = 0; i < dataLen; i ++) {
+        that.dataDirectives[i](data); 
+      }
     }
 
     /*
@@ -80,8 +67,25 @@ function MaqawConnection(peer, dstId, dataCallback, connectionCallback, attemptR
      * the connectionListener
      */
     function setConnectionStatus(connectionStatus) {
+      var i, 
+          changeLen = that.changeDirectives.length,
+          openLen = that.openDirectives.length,
+          closeLen = that.closeDirectives.length;
+
+      for (i = 0; i < changeLen; i ++) {
+        that.changeDirectives[i](connectionStatus);
+      }
+
+      if (connectionStatus === false) {
+        for (i = 0; i < closeLen; i ++) {
+          that.closeDirectives[i](connectionStatus);
+        }
+      } else if (connectionStatus === true) {
+         for (i = 0; i < openLen; i ++) {
+          that.openDirectives[i](connectionStatus);
+        }
+      }
         that.isConnected = Boolean(connectionStatus);
-        that.connectionCallback(that.isConnected);
     }
 
     /*
@@ -114,11 +118,16 @@ function MaqawConnection(peer, dstId, dataCallback, connectionCallback, attemptR
      */
     function attemptConnection() {
         // how many milliseconds we will wait until trying to connect again
+        
+        /* TODO: Exponential backoff instead? */
+
         var retryInterval = 8000;
 
         //  The max number of times a connection will be attempted
         var retryLimit = 5;
         var numAttempts = 0;
+
+        /** TODO: We should look into running web workers **/ 
 
         // create a function that will attempt to open a connection, and will retry
         // every retryInterval milliseconds until a connection is established
@@ -145,9 +154,10 @@ function MaqawConnection(peer, dstId, dataCallback, connectionCallback, attemptR
      * Send text through this connection
      */
     this.sendText = function (text) {
-        that.conn.send({
-            'text': text
-        });
+      that.conn.send({
+        'type': 'text',
+        'text': text
+      });
     };
 
     /*
@@ -163,4 +173,37 @@ function MaqawConnection(peer, dstId, dataCallback, connectionCallback, attemptR
     this.sendScreen = function (screenData) {
 
     }
+
+    this.on = function(_event, directive) {
+      // bind callback
+           if (_event === 'data')   this.dataDirectives.push(directive);   
+      else if (_event === 'open')   this.openDirectives.push(directive);   
+      else if (_event === 'close')  this.closeDirectives.push(directive);   
+      else if (_event === 'error')  this.errorDirectives.push(directive);   
+      else if (_event === 'change') this.changeDirectives.push(directive);   
+
+      return this;
+    }
+
+    this.conn.on('open', function () {
+      setConnectionStatus(true);
+    });
+    
+    this.conn.on('data', function (data) {
+      // if we are receiving data the connection is definitely open
+      setConnectionStatus(true);
+      handleData(data);
+    });
+
+    this.conn.on('close', function (err) {
+      setConnectionStatus(false);
+    });
+
+    this.conn.on('error', function (err) {
+      console.log("Connection error: " + err);
+      var i, errorLen = that.errorDirectives.length; 
+      for (var i = 0; i < errorLen; i ++) {
+        that.errorDirectives[i](err);
+      }
+    });
 }
