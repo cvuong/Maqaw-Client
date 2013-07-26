@@ -189,7 +189,3 @@ MaqawVisitorSession.prototype.getBodyContents = function () {
 MaqawVisitorSession.prototype.getHeaderContents = function () {
     return this.header;
 };
-
-
-
-

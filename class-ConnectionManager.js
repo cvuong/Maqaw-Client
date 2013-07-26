@@ -43,7 +43,7 @@ function MaqawConnectionManager(peer) {
 
     this.peer.on('connection', function(conn) {
       var i, len = that.connectionDirectives.length,
-          maqawConnection = new MaqawConnection(that.peer, null, false, conn);
+          maqawConnection = new MaqawConnection(that.peer, null, conn);
       for (i = 0; i < len; i ++) {
         that.connectionDirectives[i](maqawConnection);
       }
@@ -55,8 +55,8 @@ function MaqawConnectionManager(peer) {
      * every time the state of the connection changes. Undetermined functionality
      * when you call this with the same id multiple times. Don't do it.
      */
-    this.newConnection = function (id, attemptReconnect) {
-        var connection = new MaqawConnection(that.peer, id, attemptReconnect);
+    this.newConnection = function (id) {
+        var connection = new MaqawConnection(that.peer, id);
         that.connectionList[id] = connection;
         return connection;
     };

@@ -13,11 +13,11 @@
  * dataCallback - This function is passed any data that the connection receives
  * connectionCallback - This function is called whenever the connection status changes. It is passed true
  *      if the connection is open and false otherwise
- * attemptReconnect - True if this connection should try to reconnect to it's peer on connection loss
  * conn - Optional. This is a peerjs DataConnection object. If included, the MaqawConnection will use it
  *      instead of creating a new one.
  */
-function MaqawConnection(peer, dstId, attemptReconnect, conn) {
+
+function MaqawConnection(peer, dstId, conn) {
     var that = this;
     this.peer = peer;
     this.dstId = dstId;
@@ -27,8 +27,6 @@ function MaqawConnection(peer, dstId, attemptReconnect, conn) {
     this.dataDirectives = []; this.errorDirectives = []; 
     this.changeDirectives = [];
     //          
-
-    this.attempReconnect = attemptReconnect;
 
     // whether or not this connection is open. True if open and false otherwise
     this.isConnected = false;
@@ -96,7 +94,6 @@ function MaqawConnection(peer, dstId, attemptReconnect, conn) {
      * connectionStatus - true if the peer is connected and false otherwise
      */
     this.setServerConnectionStatus = function (connectionStatus) {
-        if (that.attempReconnect) {
             // if our peer is not connected to the server, disconnect our DataChannel with them
             if (!connectionStatus) {
                 setConnectionStatus(false);
@@ -109,7 +106,6 @@ function MaqawConnection(peer, dstId, attemptReconnect, conn) {
 
             // save connection status
             that.isPeerConnectedToServer = connectionStatus;
-        }
     };
 
     /*
