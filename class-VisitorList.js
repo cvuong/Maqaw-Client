@@ -45,7 +45,7 @@ function MaqawVisitorList(listDisplayContainer, repSession) {
         var visitorName = 'Visitor ' + that.visitorCounter;
         that.visitorCounter++;
         // use rowIndex of -1 so the row is added at the end of the table
-        return new MaqawVisitor(id, visitorName, that.repSession);
+        return new MaqawVisitor(id, visitorName, that);
     }
 
     this.setSelectedVisitor = function (visitor) {
