@@ -85,14 +85,14 @@ function MaqawVisitorList(listDisplayContainer, repSession) {
         // create an entry for each visitor
         var counter = 0;
         for (var visitorId in that.visitors) {
-            var visitorWrapper = that.visitors[visitorId];
+            var visitor = that.visitors[visitorId];
             // save the data that is important to state
             var visitorData = {
-                name: visitorWrapper.visitor.name,
-                id: visitorWrapper.getId(),
-                isSelected: visitorWrapper.isSelected,
-                rowIndex: visitorWrapper.row.rowIndex,
-                chatText: visitorWrapper.visitor.getChatSession().getText()
+                name: visitor.visitor.name,
+                id: visitor.getId(),
+                isSelected: visitor.isSelected,
+                rowIndex: visitor.row.rowIndex,
+                chatText: visitor.chatSession.getText()
             };
             data[counter] = visitorData;
             counter++;
@@ -112,22 +112,22 @@ function MaqawVisitorList(listDisplayContainer, repSession) {
         // go through each entry in the list data and restore it
         for(var index in listData){
             var dataObject = listData[index];
-            // create and update a visitorWrapper using this data
+            // create and update a visitor using this data
             // ideally we would like the visitors to show up in the same order in the table, but right now
             // we just append it to the end by passing rowIndex of -1
 
-            var visitorWrapper = new MaqawVisitor(dataObject['id'], dataObject['name'], that);
+            var visitor = new MaqawVisitor(dataObject['id'], dataObject['name'], that);
 
             if(dataObject['isSelected']) {
-                that.selectedVisitor = visitorWrapper;
-                visitorWrapper.select();
+                that.selectedVisitor = visitor;
+                visitor.select();
             }
 
             // load the chat history
-            visitorWrapper.visitor.getChatSession().setText(dataObject['chatText']);
+            visitor.chatSession.setText(dataObject['chatText']);
 
             // save this visitor in the list
-            that.visitors[visitorWrapper.getId()] = visitorWrapper;
+            that.visitors[visitor.id] = visitor;
         }
     }
 }
