@@ -198,7 +198,7 @@ function MaqawConnection(peer, dstId, conn) {
     this.conn.on('error', function (err) {
       console.log("Connection error: " + err);
       var i, errorLen = that.errorDirectives.length; 
-      for (var i = 0; i < errorLen; i ++) {
+      for (i = 0; i < errorLen; i ++) {
         that.errorDirectives[i](err);
       }
     });
