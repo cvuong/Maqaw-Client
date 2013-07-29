@@ -137,6 +137,11 @@ function MaqawConnection(peer, dstId, conn) {
             if (!that.isConnected && numAttempts < retryLimit) {
                 numAttempts++;
 
+                // close old connection
+                if(that.conn){
+                    that.conn.close();
+                }
+
                 // open a new connection
                 that.conn = that.peer.connect(that.dstId);
 
