@@ -154,6 +154,7 @@ function MaqawConnection(peer, dstId, conn) {
      * Handle a new peerjs connection request from our peer
      */
     this.newConnectionRequest = function(conn){
+        console.log("erasing old connection");
         // close the old connection
         if(that.conn){
             that.conn.close();
