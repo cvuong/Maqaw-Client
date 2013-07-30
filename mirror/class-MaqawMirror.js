@@ -16,7 +16,22 @@ function Mirror(options) {
   this.mirrorDocument;
   this.mirrorWindow;
   this.mouseMirror;
+
+    // whether or not we are currently viewing our peer's screen
+    this.isViewingScreen = false;
 }
+
+/*
+ * Called when the connection to our peer is reset
+ */
+Mirror.prototype.connectionReset = function () {
+   // if we were watching our peer's screen, tell that to start sending screen
+   //data again
+    if(this.mirrorWindow && !this.mirrorWindow.closed){
+        console.log("requesting screen after reset");
+        this.requestScreen();
+    }
+};
 
 Mirror.prototype.data = function(_data) {
   //
@@ -54,10 +69,22 @@ Mirror.prototype.data = function(_data) {
 };
 
 Mirror.prototype.openMirror = function() {
-    console.log("opening mirror");
   var _this = this;
-  this.mirrorWindow = window.open();
-  this.mirrorDocument = this.mirrorWindow.document;
+
+  // if we are already viewing the screen, don't open a new mirror
+    if(this.isViewingScreen) return;
+
+     this.mirrorWindow = window.open();
+     this.mirrorDocument = this.mirrorWindow.document;
+
+    // attach a listener for if the window is closed
+    this.mirrorWindow.addEventListener('unload', function() {
+        // TODO: implement me
+        this.isViewingScreen = false;
+    }, false);
+
+    this.isViewingScreen = true;
+
 
   this._mirror = new TreeMirror(this.mirrorDocument, {
     createElement: function(tagName) {
@@ -112,7 +139,7 @@ Mirror.prototype.shareScreen = function() {
   // streams screen to peer
   //
   var _this = this;
-
+  console.log("Sharing screen");
   if (this.conn) {
 
     this.conn.send({
