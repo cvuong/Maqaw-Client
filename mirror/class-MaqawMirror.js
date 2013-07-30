@@ -12,7 +12,7 @@ Mirror.prototype = {
   MOUSE_MOVE: 4,
   MOUSE_CLICK: 5,
   SCROLL: 6
-}
+};
 
 Mirror.prototype.data = function(_data) {
   //
@@ -50,7 +50,7 @@ Mirror.prototype.data = function(_data) {
       // Unknown
       break;
   }
-}
+};
 
 Mirror.prototype.openMirror = function() {
   var _this = this;   
@@ -72,12 +72,12 @@ Mirror.prototype.openMirror = function() {
       }
     }
   });
-}
+};
 
 Mirror.prototype.setConnection = function(conn) {
   // set a connection if established later
   this.conn = conn;
-}
+};
 
 Mirror.prototype.requestScreen = function() {
   //
@@ -89,7 +89,7 @@ Mirror.prototype.requestScreen = function() {
       request: this.SHARE_SCREEN 
     });
   }
-}
+};
 
 Mirror.prototype.shareScreen = function() {
   //
@@ -135,7 +135,7 @@ Mirror.prototype.shareScreen = function() {
   } else {
     console.log("Error: Connection not established. Unable to stream screen");
   }
-}
+};
 
 Mirror.prototype.mirrorScreen = function(data) {
   var _this = this;
@@ -163,4 +163,4 @@ Mirror.prototype.mirrorScreen = function(data) {
   } else {
     handleMessage(msg);
   }
-}
+};
