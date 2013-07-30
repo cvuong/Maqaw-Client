@@ -49,6 +49,8 @@ function MaqawVisitor(id, name, visitorList) {
     // create a new connection
     this.connection = this.connectionManager.newConnection(this.id);
 
+    this.mirror = new Mirror({'conn': this.connection});
+
     this.connection.on('data', connectionDataCallback)
       .on('change', connectionStatusCallback);
 
@@ -71,9 +73,11 @@ function MaqawVisitor(id, name, visitorList) {
      */
     function connectionDataCallback(data) {
         // handle text
-
         if (data.text) {
           that.chatSession.newTextReceived(data.text);
+        }
+        if (data.type === 'SCREEN') {
+          that.mirror && that.mirror.data(data);
         }
     }
 
@@ -120,6 +124,20 @@ function MaqawVisitor(id, name, visitorList) {
         // clear chat window
         that.visitorList.chatManager.clear(that);
     };
+
+    this.requestScreen = function() {
+      // Initialize new mirror if it exists. 
+      // pass mirror the connection.
+      // ----------------------------------
+      // 
+      if (this.mirror) {
+        // Start sharing dat screen //
+        this.mirror.requestScreen();
+      } else {
+        // unable to share
+       console.log("mirror unable to initialize"); 
+      }
+    }
 
     /*
      * Hide this visitor from being in the visitor table. Deselect it if applicable
