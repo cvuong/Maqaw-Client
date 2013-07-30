@@ -8,7 +8,10 @@ Mirror.prototype = {
   SHARE_SCREEN: 0, 
   SHARE_SCREEN_OK: 1,
   SHARE_SCREEN_REFUSE: 2,
-  SCREEN_DATA: 3
+  SCREEN_DATA: 3,
+  MOUSE_MOVE: 4,
+  MOUSE_CLICK: 5,
+  SCROLL: 6 
 }
 
 Mirror.prototype.data = function(_data) {
