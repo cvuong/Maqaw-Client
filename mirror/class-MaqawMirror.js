@@ -59,7 +59,8 @@ Mirror.prototype.data = function(_data) {
       // TODO: Trigger some sort of fake mouse click. (could be a UI event or something more complicated)
       this.mirrorScreen(_data);  
       break;
-    case this.SCROLL:
+    case DATA_ENUMS.SCROLL:
+        console.log(_data.top);
       this.mirrorWindow.scrollTo(_data.left, _data.top);
       break;
     default:
@@ -194,10 +195,10 @@ Mirror.prototype.shareScreen = function() {
       var left = window.pageXOffset;
       _this.conn.send({
         type: 'SCREEN',
-        request: _this.SCROLL,
+        request: DATA_ENUMS.SCROLL,
         top: top,
         left: left
-      })
+      });
     }
 
     window.addEventListener('scroll', scrollListener, false);
@@ -235,7 +236,7 @@ Mirror.prototype.mirrorScreen = function(data) {
   } else {
     handleMessage(msg);
   }
-}
+};
 
 function MouseMirror(doc, options) {
 
@@ -265,8 +266,8 @@ MouseMirror.prototype.data = function(_data) {
     //  Hack that appends cursor only  
     //  once a document.body exists
     if (this.doc.body) {
-      this.doc.body.appendChild(this.cursor)
-        this.isDrawn = true;
+      this.doc.body.appendChild(this.cursor);
+      this.isDrawn = true;
     }
   }
 
@@ -275,16 +276,16 @@ MouseMirror.prototype.data = function(_data) {
   } else if (_data.request === DATA_ENUMS.MOUSE_CLICK) {
     this.clickMouse(_data);
   } 
-}
+};
 
 MouseMirror.prototype.moveMouse = function(_data) {
   this.cursor.style.top = _data.coords.y + 'px';
   this.cursor.style.left = _data.coords.x + 'px';
-}
+};
 
 MouseMirror.prototype.clickMouse = function(_data) {
   // TODO: Click mouse or something
-}
+};
 
 MouseMirror.prototype.off = function() {
   this.doc.removeEventListener('mousemove', this.moveEvent, false);
