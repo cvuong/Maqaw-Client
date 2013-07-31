@@ -253,6 +253,7 @@ function MouseMirror(doc, options) {
   this.cursor.style.position = 'absolute';
   this.cursor.style.top = '0px';
   this.cursor.style.left = '0px';
+  this.cursor.setAttribute("ignore", "true");
 
     // maximum number of times per second mouse movement data will be sent
     var MAX_SEND_RATE = 10;
