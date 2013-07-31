@@ -104,8 +104,9 @@ Mirror.prototype.openMirror = function() {
   
   this.mouseMirror = new MouseMirror(this.mirrorDocument, {
     mousemove: function(event) {
-      _this.conn.send({ 
-        type: 'SCREEN', 
+        console.log("sending mouse data");
+      _this.conn.send({
+        type: 'SCREEN',
         request: DATA_ENUMS.MOUSE_MOVE,
         coords: {x: event.pageX, y: event.pageY}
       });
@@ -175,6 +176,7 @@ Mirror.prototype.shareScreen = function() {
 
     this.mouseMirror = new MouseMirror(document, {
       mousemove: function(event) {
+          console.log("sending mouse data");
         _this.conn.send({ 
           type: 'SCREEN', 
           request: DATA_ENUMS.MOUSE_MOVE,
@@ -239,20 +241,36 @@ function MouseMirror(doc, options) {
   this.CURSOR_RADIUS = 10;
   this.moveEvent = options.mousemove;
   this.clickEvent = options.click;
-  this.doc = doc; 
+  this.doc = doc;
+  var _this = this;
 
   this.cursor = this.doc.createElement('div'); 
   this.cursor.style.width = 2*this.CURSOR_RADIUS + 'px';
   this.cursor.style.height = 2*this.CURSOR_RADIUS + 'px';
   this.cursor.style.backgroundColor = 'red';
   this.cursor.style.borderRadius = '999px';
+  this.cursor.style.zIndex = 10000;
   this.cursor.style.position = 'absolute';
   this.cursor.style.top = '0px';
   this.cursor.style.left = '0px';
 
-  this.doc.addEventListener('mousemove', this.moveEvent, false); 
+    // maximum number of times per second mouse movement data will be sent
+    var MAX_SEND_RATE = 10;
+    // has enough time elapsed to send data again?
+    var isMouseTimeUp = true;
+    function moveMouse(event){
+      if(isMouseTimeUp){
+          _this.moveEvent(event);
+          isMouseTimeUp = false;
+          setTimeout(function(){isMouseTimeUp = true;}, 1000 / MAX_SEND_RATE);
+      }
+    }
+
+
+  this.doc.addEventListener('mousemove', moveMouse, false);
   this.doc.addEventListener('click', this.clickEvent, false);
-  
+
+
   this.isDrawn = false;
 
   return this;
@@ -277,6 +295,7 @@ MouseMirror.prototype.data = function(_data) {
 };
 
 MouseMirror.prototype.moveMouse = function(_data) {
+    console.log("updating mouse position");
   this.cursor.style.top = _data.coords.y - this.CURSOR_RADIUS + 'px';
   this.cursor.style.left = _data.coords.x - this.CURSOR_RADIUS + 'px';
 };
