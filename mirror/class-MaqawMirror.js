@@ -28,7 +28,6 @@ Mirror.prototype.connectionReset = function () {
    // if we were watching our peer's screen, tell that to start sending screen
    //data again
     if(this.mirrorWindow && !this.mirrorWindow.closed){
-        console.log("requesting screen after reset");
         this.requestScreen();
     }
 };
@@ -60,7 +59,6 @@ Mirror.prototype.data = function(_data) {
       this.mirrorScreen(_data);  
       break;
     case DATA_ENUMS.SCROLL:
-        console.log(_data.top);
       this.mirrorWindow.scrollTo(_data.left, _data.top);
       break;
     default:
@@ -72,17 +70,17 @@ Mirror.prototype.data = function(_data) {
 Mirror.prototype.openMirror = function() {
   var _this = this;
 
-  // if we are already viewing the screen, don't open a new mirror
-    if(this.isViewingScreen) return;
+  // if we are already viewing the screen, don't open a new window
+    if(!this.isViewingScreen) {
+         this.mirrorWindow = window.open();
+         this.mirrorDocument = this.mirrorWindow.document;
 
-     this.mirrorWindow = window.open();
-     this.mirrorDocument = this.mirrorWindow.document;
-
-    // attach a listener for if the window is closed
-    this.mirrorWindow.addEventListener('unload', function() {
-        // TODO: implement me
-        this.isViewingScreen = false;
-    }, false);
+        // attach a listener for if the window is closed
+        this.mirrorWindow.addEventListener('unload', function() {
+            // TODO: implement me
+            this.isViewingScreen = false;
+        }, false);
+    }
 
     this.isViewingScreen = true;
 
@@ -140,7 +138,6 @@ Mirror.prototype.shareScreen = function() {
   // streams screen to peer
   //
   var _this = this;
-  console.log("Sharing screen");
   if (this.conn) {
 
     this.conn.send({
