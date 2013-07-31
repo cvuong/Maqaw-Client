@@ -236,15 +236,16 @@ Mirror.prototype.mirrorScreen = function(data) {
 };
 
 function MouseMirror(doc, options) {
-
+  this.CURSOR_RADIUS = 10;
   this.moveEvent = options.mousemove;
   this.clickEvent = options.click;
   this.doc = doc; 
 
   this.cursor = this.doc.createElement('div'); 
-  this.cursor.style.width = '20px';
-  this.cursor.style.height = '20px';
+  this.cursor.style.width = 2*this.CURSOR_RADIUS + 'px';
+  this.cursor.style.height = 2*this.CURSOR_RADIUS + 'px';
   this.cursor.style.backgroundColor = 'red';
+  this.cursor.style.borderRadius = '999px';
   this.cursor.style.position = 'absolute';
   this.cursor.style.top = '0px';
   this.cursor.style.left = '0px';
@@ -276,8 +277,8 @@ MouseMirror.prototype.data = function(_data) {
 };
 
 MouseMirror.prototype.moveMouse = function(_data) {
-  this.cursor.style.top = _data.coords.y + 'px';
-  this.cursor.style.left = _data.coords.x + 'px';
+  this.cursor.style.top = _data.coords.y - this.CURSOR_RADIUS + 'px';
+  this.cursor.style.left = _data.coords.x - this.CURSOR_RADIUS + 'px';
 };
 
 MouseMirror.prototype.clickMouse = function(_data) {
