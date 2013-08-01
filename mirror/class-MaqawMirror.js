@@ -104,7 +104,6 @@ Mirror.prototype.openMirror = function() {
   
   this.mouseMirror = new MouseMirror(this.mirrorDocument, {
     mousemove: function(event) {
-        console.log("sending mouse data");
       _this.conn.send({
         type: 'SCREEN',
         request: DATA_ENUMS.MOUSE_MOVE,
@@ -180,7 +179,6 @@ Mirror.prototype.shareScreen = function() {
 
     this.mouseMirror = new MouseMirror(document, {
       mousemove: function(event) {
-          console.log("sending mouse data");
         _this.conn.send({ 
           type: 'SCREEN', 
           request: DATA_ENUMS.MOUSE_MOVE,
@@ -304,7 +302,6 @@ MouseMirror.prototype.data = function(_data) {
 };
 
 MouseMirror.prototype.moveMouse = function(_data) {
-    console.log("updating mouse position");
   this.cursor.style.top = _data.coords.y - this.CURSOR_RADIUS + 'px';
   this.cursor.style.left = _data.coords.x - this.CURSOR_RADIUS + 'px';
 };
@@ -314,34 +311,52 @@ MouseMirror.prototype.clickMouse = function(_data) {
     var y = _data.coords.y;
     var _this = this;
 
-    var radius = 1;
-    var click = this.doc.createElement('div');
-    click.style.width = 2*radius + 'px';
-    click.style.height = 2*radius + 'px';
-    click.style.backgroundColor = 'transparent';
-    click.style.border = '2px solid yellow';
-    click.style.borderRadius = '999px';
-    click.style.zIndex = 10000;
-    click.style.position = 'absolute';
-    click.style.top = x - radius + 'px';
-    click.style.left = y - radius + 'px';
-    click.setAttribute("ignore", "true");
-    this.doc.body.appendChild(click);
-
-    var rate = 50;
-    var maxRadius = 40;
-    var radiusMultiplier = 1.7;
-    (function ping() {
-        radius *= radiusMultiplier;
+    function makeExpandingRing(){
+        var radius = 1;
+        var click = _this.doc.createElement('div');
         click.style.width = 2*radius + 'px';
         click.style.height = 2*radius + 'px';
+        click.style.backgroundColor = 'transparent';
+        click.style.border = '2px solid rgba(255, 255, 0, 1)';
+        click.style.borderRadius = '999px';
+        click.style.zIndex = 10000;
+        click.style.position = 'absolute';
         click.style.top = y - radius + 'px';
         click.style.left = x - radius + 'px';
+        click.setAttribute("ignore", "true");
+        _this.doc.body.appendChild(click);
 
-        if(radius < maxRadius){
-            setTimeout(ping, rate);
-        } else {
-            _this.doc.body.removeChild(click);
+        var rate = 50;
+        var radiusIncrease = 2;
+        var transparency = 1;
+        var transparencyRate = .03;
+
+        (function expand() {
+            radius += radiusIncrease;
+            transparency -= transparencyRate;
+            click.style.border = '2px solid rgba(255, 255, 0, ' + transparency + ')';
+            click.style.width = 2*radius + 'px';
+            click.style.height = 2*radius + 'px';
+            click.style.top = y - radius + 'px';
+            click.style.left = x - radius + 'px';
+
+            if(transparency > 0){
+                setTimeout(expand, rate);
+            } else {
+                _this.doc.body.removeChild(click);
+            }
+        })();
+    }
+
+    var numRings = 6;
+    var ringSpacing = 300;
+    var ringCounter = 0;
+
+    (function doRings (){
+        if(ringCounter < numRings){
+            makeExpandingRing();
+            ringCounter++;
+            setTimeout(doRings, ringSpacing);
         }
     })();
 
