@@ -6,7 +6,9 @@ var DATA_ENUMS = {
   MOUSE_MOVE: 4,
   MOUSE_CLICK: 5,
   SCROLL: 6,
-  INPUT: 7
+  INPUT: 7,
+  TEXT_AREA: 8,
+  SELECT: 9
 };
 
 function Mirror(options) {
@@ -58,7 +60,11 @@ Mirror.prototype.data = function(_data) {
     case DATA_ENUMS.MOUSE_CLICK:
       // Mouse click event
     case DATA_ENUMS.INPUT:
-      // Text input event
+      // Interactions with input elements
+    case DATA_ENUMS.SELECT:
+      // Interactions with select elements
+    case DATA_ENUMS.TEXT_AREA:
+     // Interactions with textarea elements
       this.mirrorScreen(_data);  
       break;
     case DATA_ENUMS.SCROLL:
@@ -212,8 +218,13 @@ Mirror.prototype.shareScreen = function() {
     window.addEventListener('scroll', scrollListener, false);
 
       // attach listeners for form data
-      var inputs, index, textareas;
+      var inputs, index;
       inputs = document.getElementsByTagName('input');
+      inputs = Array.prototype.slice.call(inputs);
+      // include textareas
+      var textareas = document.getElementsByTagName('textarea');
+      textareas = Array.prototype.slice.call(textareas);
+      inputs = inputs.concat(textareas);
       for (index = 0; index < inputs.length; ++index) {
           var elem = inputs[index];
           // attach change listeners for radio and check buttons
@@ -230,7 +241,7 @@ Mirror.prototype.shareScreen = function() {
 
           // listen to value for other input types
           else {
-              inputs[index].addEventListener('keyup', function(){
+              elem.addEventListener('keyup', function(){
                   _this.conn.send({
                       type: 'SCREEN',
                       request: DATA_ENUMS.INPUT,
@@ -240,7 +251,6 @@ Mirror.prototype.shareScreen = function() {
               }, false);
           }
       }
-
   } else {
     console.log("Error: Connection not established. Unable to stream screen");
   }
@@ -266,18 +276,15 @@ Mirror.prototype.mirrorScreen = function(data) {
     else if (msg.request === DATA_ENUMS.MOUSE_MOVE || msg.request === DATA_ENUMS.MOUSE_CLICK)
       _this.mouseMirror.data(msg);
     else if (msg.request === DATA_ENUMS.INPUT) {
-          var node = maqawGetNodeFromHierarchy(_this.mirrorDocument, msg.index);
-
+          var inputNode = maqawGetNodeFromHierarchy(_this.mirrorDocument, msg.index);
             // set the checked attribute if applicable
             if(typeof msg.checked !== 'undefined'){
-                node.checked = msg.checked;
+                inputNode.checked = msg.checked;
             }
             // otherwise set text value
             else {
-                node.value = msg.text;
+                inputNode.value = msg.text;
             }
-
-
     }
   }
 
