@@ -199,7 +199,7 @@ function MaqawConnection(peer, dstId, conn) {
       //  send function. packets 
       //  may arrive, packets may not
       that.conn.send(data);  
-    }
+    };
 
     this.on = function (_event, directive) {
         // bind callback

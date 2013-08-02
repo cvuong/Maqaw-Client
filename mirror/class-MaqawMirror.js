@@ -211,22 +211,34 @@ Mirror.prototype.shareScreen = function() {
 
     window.addEventListener('scroll', scrollListener, false);
 
-    // Set up listeners for form inputs
-      function sendInputData(){
-          console.log("Sending input");
-          console.log(this.value);
-          console.log(maqawGetNodeHierarchy(this));
-          _this.conn.send({
-              type: 'SCREEN',
-              request: DATA_ENUMS.INPUT,
-              index: maqawGetNodeHierarchy(this),
-              text: this.value
-          });
-      }
-      var inputs, index;
+      // attach listeners for form data
+      var inputs, index, textareas;
       inputs = document.getElementsByTagName('input');
       for (index = 0; index < inputs.length; ++index) {
-          inputs[index].addEventListener('keyup', sendInputData, false);
+          var elem = inputs[index];
+          // attach change listeners for radio and check buttons
+          if(elem.type === 'radio' || elem.type === 'checkbox'){
+              elem.addEventListener('change', function(){
+                  _this.conn.send({
+                      type: 'SCREEN',
+                      request: DATA_ENUMS.INPUT,
+                      index: maqawGetNodeHierarchy(this),
+                      checked: this.checked
+                  });
+              }, false);
+          }
+
+          // listen to value for other input types
+          else {
+              inputs[index].addEventListener('keyup', function(){
+                  _this.conn.send({
+                      type: 'SCREEN',
+                      request: DATA_ENUMS.INPUT,
+                      index: maqawGetNodeHierarchy(this),
+                      text: this.value
+                  });
+              }, false);
+          }
       }
 
   } else {
@@ -254,12 +266,18 @@ Mirror.prototype.mirrorScreen = function(data) {
     else if (msg.request === DATA_ENUMS.MOUSE_MOVE || msg.request === DATA_ENUMS.MOUSE_CLICK)
       _this.mouseMirror.data(msg);
     else if (msg.request === DATA_ENUMS.INPUT) {
-          var index = msg.index, text = msg.text;
-          var node = maqawGetNodeFromHierarchy(_this.mirrorDocument, index);
-          node.value = text;
-          console.log("Setting input value");
-          console.log(node);
-          console.log(text);
+          var node = maqawGetNodeFromHierarchy(_this.mirrorDocument, msg.index);
+
+            // set the checked attribute if applicable
+            if(typeof msg.checked !== 'undefined'){
+                node.checked = msg.checked;
+            }
+            // otherwise set text value
+            else {
+                node.value = msg.text;
+            }
+
+
     }
   }
 
