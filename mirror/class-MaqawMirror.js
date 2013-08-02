@@ -227,6 +227,7 @@ Mirror.prototype.shareScreen = function() {
       inputs = inputs.concat(textareas);
       for (index = 0; index < inputs.length; ++index) {
           var elem = inputs[index];
+
           // attach change listeners for radio and check buttons
           if(elem.type === 'radio' || elem.type === 'checkbox'){
               elem.addEventListener('change', function(){
@@ -251,6 +252,26 @@ Mirror.prototype.shareScreen = function() {
               }, false);
           }
       }
+
+      // listen for select fields
+      var selects = document.getElementsByTagName('select');
+       for(index = 0; index < selects.length; index++){
+           var selectNode = selects[index];
+          if(selectNode.type === 'select-one'){
+              selectNode.addEventListener('change', function(){
+                  _this.conn.send({
+                      type: 'SCREEN',
+                      request: DATA_ENUMS.INPUT,
+                      index: maqawGetNodeHierarchy(this),
+                      selectedIndex: this.selectedIndex
+                  });
+              }, false);
+          } else if (selectNode.type === 'select-multiple'){
+              // TODO: support multiple select
+          }
+
+      }
+
   } else {
     console.log("Error: Connection not established. Unable to stream screen");
   }
@@ -281,6 +302,12 @@ Mirror.prototype.mirrorScreen = function(data) {
             if(typeof msg.checked !== 'undefined'){
                 inputNode.checked = msg.checked;
             }
+
+            // check for select options
+            else if (typeof msg.selectedIndex !== 'undefined'){
+                inputNode.selectedIndex = msg.selectedIndex;
+            }
+
             // otherwise set text value
             else {
                 inputNode.value = msg.text;
