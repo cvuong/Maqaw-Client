@@ -267,7 +267,19 @@ Mirror.prototype.shareScreen = function() {
                   });
               }, false);
           } else if (selectNode.type === 'select-multiple'){
-              // TODO: support multiple select
+              selectNode.addEventListener('change', function(){
+              // get list of selected options
+              var selectedOptions = [];
+              for(var j = 0; j < this.selectedOptions.length; j++){
+                  selectedOptions.push(this.selectedOptions[j].text);
+              }
+              _this.conn.send({
+                  type: 'SCREEN',
+                  request: DATA_ENUMS.INPUT,
+                  index: maqawGetNodeHierarchy(this),
+                  selectedOptions: selectedOptions
+              });
+              }, false);
           }
 
       }
@@ -306,6 +318,22 @@ Mirror.prototype.mirrorScreen = function(data) {
             // check for select options
             else if (typeof msg.selectedIndex !== 'undefined'){
                 inputNode.selectedIndex = msg.selectedIndex;
+            }
+
+            // check for multiple select options
+            else if (typeof msg.selectedOptions !== 'undefined'){
+                var i, option, length = inputNode.options.length, selectedOptions = msg.selectedOptions,
+                    optionsList = inputNode.options;
+                for (i = 0; i < length; i++ ) {
+                    option = optionsList[i];
+                    var index = selectedOptions.indexOf(option.text);
+                    if(index !== -1){
+                        option.selected = true;
+                    } else {
+                        option.selected = false;
+                    }
+
+                }
             }
 
             // otherwise set text value
