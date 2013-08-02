@@ -5,7 +5,8 @@ var DATA_ENUMS = {
   SCREEN_DATA: 3,
   MOUSE_MOVE: 4,
   MOUSE_CLICK: 5,
-  SCROLL: 6
+  SCROLL: 6,
+  INPUT: 7
 };
 
 function Mirror(options) {
@@ -55,7 +56,9 @@ Mirror.prototype.data = function(_data) {
     case DATA_ENUMS.MOUSE_MOVE:
       // Mouse move event
     case DATA_ENUMS.MOUSE_CLICK:
-      // TODO: Trigger some sort of fake mouse click. (could be a UI event or something more complicated)
+      // Mouse click event
+    case DATA_ENUMS.INPUT:
+      // Text input event
       this.mirrorScreen(_data);  
       break;
     case DATA_ENUMS.SCROLL:
@@ -207,6 +210,25 @@ Mirror.prototype.shareScreen = function() {
     }
 
     window.addEventListener('scroll', scrollListener, false);
+
+    // Set up listeners for form inputs
+      function sendInputData(){
+          console.log("Sending input");
+          console.log(this.value);
+          console.log(maqawGetNodeHierarchy(this));
+          _this.conn.send({
+              type: 'SCREEN',
+              request: DATA_ENUMS.INPUT,
+              index: maqawGetNodeHierarchy(this),
+              text: this.value
+          });
+      }
+      var inputs, index;
+      inputs = document.getElementsByTagName('input');
+      for (index = 0; index < inputs.length; ++index) {
+          inputs[index].addEventListener('keyup', sendInputData, false);
+      }
+
   } else {
     console.log("Error: Connection not established. Unable to stream screen");
   }
@@ -231,6 +253,14 @@ Mirror.prototype.mirrorScreen = function(data) {
       _this._mirror[msg.f].apply(_this._mirror, msg.args);
     else if (msg.request === DATA_ENUMS.MOUSE_MOVE || msg.request === DATA_ENUMS.MOUSE_CLICK)
       _this.mouseMirror.data(msg);
+    else if (msg.request === DATA_ENUMS.INPUT) {
+          var index = msg.index, text = msg.text;
+          var node = maqawGetNodeFromHierarchy(_this.mirrorDocument, index);
+          node.value = text;
+          console.log("Setting input value");
+          console.log(node);
+          console.log(text);
+    }
   }
 
   var msg = data;
@@ -298,7 +328,8 @@ MouseMirror.prototype.data = function(_data) {
     this.moveMouse(_data);
   } else if (_data.request === DATA_ENUMS.MOUSE_CLICK) {
     this.clickMouse(_data);
-  } 
+  }
+
 };
 
 MouseMirror.prototype.moveMouse = function(_data) {

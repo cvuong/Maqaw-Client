@@ -73,7 +73,7 @@ function MaqawVisitor(id, name, visitorList) {
      */
     function connectionDataCallback(data) {
         // handle text
-        if (data.text) {
+        if (data.type === 'TEXT') {
             that.chatSession.newTextReceived(data.text);
             // show an alert that new text has been received
             alertNewText();
