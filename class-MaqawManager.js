@@ -15,7 +15,6 @@ function MaqawManager(options, display) {
 
     // this id is used whenever the client makes a connection with peerjs
     this.id = maqawCookies.getItem('peerId');
-    console.log("the cookie is:");
     // an array of ids of representatives that are available for chat
     this.maqawDisplay = display;
     this.visitorSession;
