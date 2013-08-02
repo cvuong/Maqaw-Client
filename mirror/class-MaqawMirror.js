@@ -123,7 +123,8 @@ Mirror.prototype.openMirror = function() {
         _this.conn.send({
             type: 'SCREEN',
             request: DATA_ENUMS.MOUSE_CLICK,
-            coords: {x: event.pageX, y: event.pageY}
+            coords: {x: event.pageX, y: event.pageY},
+            target: maqawGetNodeHierarchy(event.target)
         });
     }
   }); 
@@ -198,7 +199,8 @@ Mirror.prototype.shareScreen = function() {
           _this.conn.send({
               type: 'SCREEN',
               request: DATA_ENUMS.MOUSE_CLICK,
-              coords: {x: event.pageX, y: event.pageY}
+              coords: {x: event.pageX, y: event.pageY},
+              target: maqawGetNodeHierarchy(event.target)
           });
       }
     });
@@ -360,6 +362,9 @@ function MouseMirror(doc, options) {
   this.doc = doc;
   var _this = this;
 
+    // keep track of the last element that was clicked on
+  this.lastElementClicked;
+
   this.cursor = this.doc.createElement('div'); 
   this.cursor.style.width = 2*this.CURSOR_RADIUS + 'px';
   this.cursor.style.height = 2*this.CURSOR_RADIUS + 'px';
@@ -421,6 +426,19 @@ MouseMirror.prototype.clickMouse = function(_data) {
     var x = _data.coords.x;
     var y = _data.coords.y;
     var _this = this;
+
+    // get the clicked element
+    var target = maqawGetNodeFromHierarchy(this.doc, _data.target);
+    // remove highlight from last clicked element
+    if(this.lastElementClicked){
+        this.lastElementClicked.className = this.lastElementClicked.className.replace(/\bmaqaw-mirror-clicked-element\b/,'');
+    }
+    // highlight the element that was clicked if it wasn't the body
+    if(target.tagName !== 'BODY'){
+        target.className = target.className + ' maqaw-mirror-clicked-element';
+        this.lastElementClicked = target;
+    }
+
 
     function makeExpandingRing(){
         var radius = 1;
