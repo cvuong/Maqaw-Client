@@ -5,7 +5,7 @@
 
 function MaqawLoginPage(manager) {
     var that = this;
-    var loginEndpoint = 'http://54.214.232.157:3000/login';
+    var loginEndpoint = 'http://localhost:3001/login';
     var email = 'konakid@gmail.com';
     var password = 'asdfasdf';
 

@@ -3,8 +3,8 @@
  */
 function MaqawManager(options, display) {
     var that = this,
-        host = '54.214.232.157',
-        port = 3000;
+        host = 'localhost',
+        port = 3001;
 
     // the key that peers will use to connect to each other on the peer server
     this.key = options.key;
@@ -15,6 +15,7 @@ function MaqawManager(options, display) {
 
     // this id is used whenever the client makes a connection with peerjs
     this.id = maqawCookies.getItem('peerId');
+    console.log("the cookie is:");
     // an array of ids of representatives that are available for chat
     this.maqawDisplay = display;
     this.visitorSession;
