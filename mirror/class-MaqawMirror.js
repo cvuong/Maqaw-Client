@@ -21,6 +21,7 @@ function Mirror(options) {
 
   // whether or not we are currently viewing our peer's screen
   this.isViewingScreen = false;
+
 }
 
 /*
@@ -128,7 +129,47 @@ Mirror.prototype.openMirror = function() {
     }
   });
 
-  this.inputMirror = new MaqawInputMirror(this.mirrorDocument, this.conn);
+  this.inputMirror = new MaqawInputMirror(this.mirrorDocument, {
+      multipleSelect: function(){
+          // get list of selected options
+          var selectedOptions = [];
+          for(var j = 0; j < this.selectedOptions.length; j++){
+              selectedOptions.push(this.selectedOptions[j].text);
+          }
+          _this.conn.send({
+              type: MAQAW_DATA_TYPE.SCREEN,
+              request: MAQAW_MIRROR_ENUMS.INPUT,
+              index: maqawGetNodeHierarchy(this),
+              selectedOptions: selectedOptions
+          });
+      },
+      singleSelect: function(){
+          _this.conn.send({
+              type: MAQAW_DATA_TYPE.SCREEN,
+              request: MAQAW_MIRROR_ENUMS.INPUT,
+              index: maqawGetNodeHierarchy(this),
+              selectedIndex: this.selectedIndex
+          });
+      }
+          ,
+      inputDefault: function(){
+          _this.conn.send({
+              type: MAQAW_DATA_TYPE.SCREEN,
+              request: MAQAW_MIRROR_ENUMS.INPUT,
+              index: maqawGetNodeHierarchy(this),
+              text: this.value
+          });
+      }
+          ,
+      radioAndCheckbox: function(){
+          _this.conn.send({
+              type: MAQAW_DATA_TYPE.SCREEN,
+              request: MAQAW_MIRROR_ENUMS.INPUT,
+              index: maqawGetNodeHierarchy(this),
+              checked: this.checked
+          });
+      }
+  });
 };
 
 Mirror.prototype.setConnection = function(conn) {
@@ -222,7 +263,47 @@ Mirror.prototype.shareScreen = function() {
 
 
     /* Set up listeners to input events */
-     this.inputMirror = new MaqawInputMirror(document, this.conn);
+      this.inputMirror = new MaqawInputMirror(document, {
+          multipleSelect: function(){
+              // get list of selected options
+              var selectedOptions = [];
+              for(var j = 0; j < this.selectedOptions.length; j++){
+                  selectedOptions.push(this.selectedOptions[j].text);
+              }
+              _this.conn.send({
+                  type: MAQAW_DATA_TYPE.SCREEN,
+                  request: MAQAW_MIRROR_ENUMS.INPUT,
+                  index: maqawGetNodeHierarchy(this),
+                  selectedOptions: selectedOptions
+              });
+          },
+          singleSelect: function(){
+              _this.conn.send({
+                  type: MAQAW_DATA_TYPE.SCREEN,
+                  request: MAQAW_MIRROR_ENUMS.INPUT,
+                  index: maqawGetNodeHierarchy(this),
+                  selectedIndex: this.selectedIndex
+              });
+          }
+          ,
+          inputDefault: function(){
+              _this.conn.send({
+                  type: MAQAW_DATA_TYPE.SCREEN,
+                  request: MAQAW_MIRROR_ENUMS.INPUT,
+                  index: maqawGetNodeHierarchy(this),
+                  text: this.value
+              });
+          }
+          ,
+          radioAndCheckbox: function(){
+              _this.conn.send({
+                  type: MAQAW_DATA_TYPE.SCREEN,
+                  request: MAQAW_MIRROR_ENUMS.INPUT,
+                  index: maqawGetNodeHierarchy(this),
+                  checked: this.checked
+              });
+          }
+      });
 
   } else {
     console.log("Error: Connection not established. Unable to stream screen");
@@ -409,10 +490,14 @@ MouseMirror.prototype.off = function() {
  * doc - The document to search for input elements
  * conn - The connection to use to send mirror updates about the inputs
  */
-function MaqawInputMirror(doc, conn){
+function MaqawInputMirror(doc, options){
     this.doc = doc;
-    this.conn = conn;
     var _this = this;
+
+    this.radioAndCheckbox = options.radioAndCheckbox;
+    this.singleSelect = options.singleSelect;
+    this.multipleSelect = options.multipleSelect;
+    this.inputDefault = options.inputDefault;
 
     // attach listeners for form data
     var inputs, index;
@@ -427,26 +512,12 @@ function MaqawInputMirror(doc, conn){
 
         // attach change listeners for radio and check buttons
         if(elem.type === 'radio' || elem.type === 'checkbox'){
-            elem.addEventListener('change', function(){
-                _this.conn.send({
-                    type: MAQAW_DATA_TYPE.SCREEN,
-                    request: MAQAW_MIRROR_ENUMS.INPUT,
-                    index: maqawGetNodeHierarchy(this),
-                    checked: this.checked
-                });
-            }, false);
+            elem.addEventListener('change', this.radioAndCheckbox, false);
         }
 
         // listen to value for other input types
         else {
-            elem.addEventListener('keyup', function(){
-                _this.conn.send({
-                    type: MAQAW_DATA_TYPE.SCREEN,
-                    request: MAQAW_MIRROR_ENUMS.INPUT,
-                    index: maqawGetNodeHierarchy(this),
-                    text: this.value
-                });
-            }, false);
+            elem.addEventListener('keyup', this.inputDefault, false);
         }
     }
 
@@ -456,28 +527,9 @@ function MaqawInputMirror(doc, conn){
     for(index = 0; index < selects.length; index++){
         var selectNode = selects[index];
         if(selectNode.type === 'select-one'){
-            selectNode.addEventListener('change', function(){
-                _this.conn.send({
-                    type: MAQAW_DATA_TYPE.SCREEN,
-                    request: MAQAW_MIRROR_ENUMS.INPUT,
-                    index: maqawGetNodeHierarchy(this),
-                    selectedIndex: this.selectedIndex
-                });
-            }, false);
+            selectNode.addEventListener('change', this.singleSelect, false);
         } else if (selectNode.type === 'select-multiple'){
-            selectNode.addEventListener('change', function(){
-                // get list of selected options
-                var selectedOptions = [];
-                for(var j = 0; j < this.selectedOptions.length; j++){
-                    selectedOptions.push(this.selectedOptions[j].text);
-                }
-                _this.conn.send({
-                    type: MAQAW_DATA_TYPE.SCREEN,
-                    request: MAQAW_MIRROR_ENUMS.INPUT,
-                    index: maqawGetNodeHierarchy(this),
-                    selectedOptions: selectedOptions
-                });
-            }, false);
+            selectNode.addEventListener('change', _this.multipleSelect, false);
         }
 
     }
@@ -517,4 +569,11 @@ MaqawInputMirror.prototype.data = function(data){
     else {
         inputNode.value = data.text;
     }
+};
+
+MaqawInputMirror.prototype.off = function() {
+    this.doc.removeEventListener('keyup', this.inputDefault, false);
+    this.doc.removeEventListener('change', this.radioAndCheckbox, false);
+    this.doc.removeEventListener('change', this.singleSelect, false);
+    this.doc.removeEventListener('change', this.multipleSelect, false);
 };
