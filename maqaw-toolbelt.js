@@ -5,6 +5,8 @@
  * Time: 12:41 PM
  * To change this template use File | Settings | File Templates.
  */
+
+
 function maqawAjaxPost(url, params, callback) {
     var xhr;
 
@@ -108,3 +110,12 @@ function maqawGetNodeFromHierarchy(doc, hierarchy){
           }
     return node;
 }
+
+
+/*
+ * Type codes for sending data with a MaqawConnection
+ */
+var MAQAW_DATA_TYPE = {
+    TEXT: 0,
+    SCREEN: 1
+};

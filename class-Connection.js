@@ -175,7 +175,7 @@ function MaqawConnection(peer, dstId, conn) {
      */
     this.sendText = function (text) {
         that.conn.send({
-            'type': 'TEXT',
+            'type': MAQAW_DATA_TYPE.TEXT,
             'text': text
         });
     };
