@@ -8,6 +8,10 @@ function MaqawPeer(id, options) {
     id = undefined;
   }
 
+  console.log("Initing a new MaqawPeer instance");
+  console.log(id);
+  console.log(options);
+
   // Ensure host, port, key exist
   if (!options.host || !options.port || !options.key) {
     console.log("Missing options: host, port, or key");
@@ -30,11 +34,6 @@ function MaqawPeer(id, options) {
   var socketUrl = 'http://' + options.host + ':' + options.port;
   this.socket = io.connect(socketUrl);
   this.socket.emit('init connect', { id: this.id, name: options.key, representative: options.representative });
-}
-
-// Retrieve Peer ID
-MaqawPeer.prototype.getID = function() {
-
 }
 
 // Connect to another peer

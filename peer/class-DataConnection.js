@@ -2,6 +2,7 @@ function DataConnection(options) {
   this.src = options.src;
   this.dst = options.dst;
   this.options = options.options;
+  this.open = true;
 
   // Establish connection to socket
   var socketUrl = 'http://' + this.options.host + ':' + this.options.port;

@@ -111,11 +111,13 @@ function MaqawLoginPage(manager) {
 
             maqawCookies.removeItem('maqawRepLoginCookie');
         } else if(xhr.status === 200) {
+            console.log("success logging in");
             // success! hide error message
             errorMessage.style.display = 'none';
             // create new MaqawRepresentative object with response data
             var rep = new MaqawRepresentative('RepName');
             // tell manager to change to rep mode using our representative data
+            console.log("starting a new rep session");
             that.maqawManager.startNewRepSession(rep);
             that.loginSuccess = true;
         }

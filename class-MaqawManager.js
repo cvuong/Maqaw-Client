@@ -15,6 +15,8 @@ function MaqawManager(options, display) {
 
     // this id is used whenever the client makes a connection with peerjs
     this.id = maqawCookies.getItem('peerId');
+    console.log("inside of cookies, the peerid is");
+    console.log(this.id);
     // an array of ids of representatives that are available for chat
     this.maqawDisplay = display;
     this.visitorSession;
@@ -25,10 +27,10 @@ function MaqawManager(options, display) {
 
     if (this.id) {
         //  peer id has been stored in the browser. Use it
-        this.peer = new Peer(this.id, {key: this.key, host: host, port: port});
+        this.peer = new MaqawPeer(this.id, {key: this.key, host: host, port: port});
     } else {
         //  No peer id cookie found. Retrieve new id from browser
-        this.peer = new Peer({key: this.key, host: host, port: port});
+        this.peer = new MaqawPeer({key: this.key, host: host, port: port});
     }
 
     // initialize the connection manager
@@ -41,14 +43,17 @@ function MaqawManager(options, display) {
         maqawCookies.setItem('peerId', id, Infinity);
     });
 
-    this.peer.on('clients', function (visitors) {
+    this.peer.on('visitors', function (visitors) {
         console.log('visitors: ' + visitors.msg);
+        console.log(visitors.msg)
         that.visitors = visitors.msg;
         that.handleVisitorList(that.visitors);
     });
 
     this.peer.on('representatives', function (reps) {
+        console.log('representatives');
         console.log('Reps: ' + reps.msg);
+        console.log(reps.msg);
         that.representatives = reps.msg;
     });
 
