@@ -7,7 +7,8 @@ var MAQAW_MIRROR_ENUMS = {
   MOUSE_CLICK: 5,
   SCROLL: 6,
   INPUT: 7,
-  SIZE: 8
+  SIZE_REQUEST: 8,
+  SIZE: 9
 };
 
 function Mirror(options) {
@@ -70,6 +71,13 @@ Mirror.prototype.data = function(_data) {
     case MAQAW_MIRROR_ENUMS.SIZE:
       this.mirrorDocument.body.style.width = _data.width;
       break;
+    case MAQAW_MIRROR_ENUMS.SIZE_REQUEST:
+      this.conn.send({
+        type: MAQAW_DATA_TYPE.SCREEN,
+        request: MAQAW_MIRROR_ENUMS.SIZE,
+        width: document.body.clientWidth
+      });
+      break;
     default:
       // Unknown
       break;
@@ -89,6 +97,13 @@ Mirror.prototype.openMirror = function() {
             // TODO: implement me
             _this.isViewingScreen = false;
         }, false);
+
+        // request dimensions for body
+        _this.conn.send({
+            type: MAQAW_DATA_TYPE.SCREEN,
+            request: MAQAW_MIRROR_ENUMS.SIZE_REQUEST
+        });
+
     }
 
     this.isViewingScreen = true;
@@ -307,18 +322,19 @@ Mirror.prototype.shareScreen = function() {
 
       // listener for window resize
       var oldResize = window.onresize;
-      window.onresize = function(){
-         _this.conn.send({
-             type: MAQAW_DATA_TYPE.SCREEN,
-             request: MAQAW_MIRROR_ENUMS.SIZE,
-             width: document.body.clientWidth
-         });
+      function newResize (){
+          _this.conn.send({
+              type: MAQAW_DATA_TYPE.SCREEN,
+              request: MAQAW_MIRROR_ENUMS.SIZE,
+              width: document.body.clientWidth
+          });
 
-         // call the old resize function as well if we overwrote one
-         if(oldResize){
-             oldResize();
-         }
+          // call the old resize function as well if we overwrote one
+          if(oldResize){
+              oldResize();
+          }
       }
+      window.onresize = newResize;
 
   } else {
     console.log("Error: Connection not established. Unable to stream screen");
