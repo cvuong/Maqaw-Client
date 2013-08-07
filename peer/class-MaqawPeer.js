@@ -49,7 +49,7 @@ MaqawPeer.prototype.on = function(event, cb) {
   if (event == 'connection') {
     var self = this;
     this.socket.on('connection', function(data) {
-      var dataConnection = new DataConnection({ options: self.options, src: data.src.id, dst: data.dst.id });
+      var dataConnection = new DataConnection({ options: self.options, src: data.src, dst: data.dst });
       console.log("what the data connection looks like");
       console.log(dataConnection);
       cb(dataConnection);
