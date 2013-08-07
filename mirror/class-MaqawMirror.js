@@ -57,10 +57,10 @@ Mirror.prototype.data = function(_data) {
       break;
     case MAQAW_MIRROR_ENUMS.SCREEN_DATA:
       //  Screen Data.
-    case MAQAW_MIRROR_ENUMS.MOUSE_MOVE:
-      // Mouse move event
     case MAQAW_MIRROR_ENUMS.MOUSE_CLICK:
       // Mouse click event
+    case MAQAW_MIRROR_ENUMS.MOUSE_MOVE:
+      // Mouse move event
     case MAQAW_MIRROR_ENUMS.INPUT:
       // Interactions with input elements
       this.mirrorScreen(_data);  
@@ -135,11 +135,13 @@ Mirror.prototype.openMirror = function() {
       });
     }, 
     click: function(event) {
+        console.log("sending mouse click");
+        var t = maqawGetNodeHierarchy(_this.mirrorDocument, event.target);
         _this.conn.send({
             type: MAQAW_DATA_TYPE.SCREEN,
             request: MAQAW_MIRROR_ENUMS.MOUSE_CLICK,
             coords: {x: event.pageX, y: event.pageY},
-            target: maqawGetNodeHierarchy(event.target)
+            target: t
         });
     }
   });
@@ -154,7 +156,7 @@ Mirror.prototype.openMirror = function() {
           _this.conn.send({
               type: MAQAW_DATA_TYPE.SCREEN,
               request: MAQAW_MIRROR_ENUMS.INPUT,
-              index: maqawGetNodeHierarchy(this),
+              index: maqawGetNodeHierarchy(_this.mirrorDocument, this),
               selectedOptions: selectedOptions
           });
       },
@@ -162,7 +164,7 @@ Mirror.prototype.openMirror = function() {
           _this.conn.send({
               type: MAQAW_DATA_TYPE.SCREEN,
               request: MAQAW_MIRROR_ENUMS.INPUT,
-              index: maqawGetNodeHierarchy(this),
+              index: maqawGetNodeHierarchy(_this.mirrorDocument, this),
               selectedIndex: this.selectedIndex
           });
       }
@@ -171,7 +173,7 @@ Mirror.prototype.openMirror = function() {
           _this.conn.send({
               type: MAQAW_DATA_TYPE.SCREEN,
               request: MAQAW_MIRROR_ENUMS.INPUT,
-              index: maqawGetNodeHierarchy(this),
+              index: maqawGetNodeHierarchy(_this.mirrorDocument, this),
               text: this.value
           });
       }
@@ -180,7 +182,7 @@ Mirror.prototype.openMirror = function() {
           _this.conn.send({
               type: MAQAW_DATA_TYPE.SCREEN,
               request: MAQAW_MIRROR_ENUMS.INPUT,
-              index: maqawGetNodeHierarchy(this),
+              index: maqawGetNodeHierarchy(_this.mirrorDocument, this),
               checked: this.checked
           });
       }
@@ -257,7 +259,7 @@ Mirror.prototype.shareScreen = function() {
               type: MAQAW_DATA_TYPE.SCREEN,
               request: MAQAW_MIRROR_ENUMS.MOUSE_CLICK,
               coords: {x: event.pageX, y: event.pageY},
-              target: maqawGetNodeHierarchy(event.target)
+              target: maqawGetNodeHierarchy(document, event.target)
           });
       }
     });
@@ -288,7 +290,7 @@ Mirror.prototype.shareScreen = function() {
               _this.conn.send({
                   type: MAQAW_DATA_TYPE.SCREEN,
                   request: MAQAW_MIRROR_ENUMS.INPUT,
-                  index: maqawGetNodeHierarchy(this),
+                  index: maqawGetNodeHierarchy(document, this),
                   selectedOptions: selectedOptions
               });
           },
@@ -296,7 +298,7 @@ Mirror.prototype.shareScreen = function() {
               _this.conn.send({
                   type: MAQAW_DATA_TYPE.SCREEN,
                   request: MAQAW_MIRROR_ENUMS.INPUT,
-                  index: maqawGetNodeHierarchy(this),
+                  index: maqawGetNodeHierarchy(document, this),
                   selectedIndex: this.selectedIndex
               });
           }
@@ -305,7 +307,7 @@ Mirror.prototype.shareScreen = function() {
               _this.conn.send({
                   type: MAQAW_DATA_TYPE.SCREEN,
                   request: MAQAW_MIRROR_ENUMS.INPUT,
-                  index: maqawGetNodeHierarchy(this),
+                  index: maqawGetNodeHierarchy(document, this),
                   text: this.value
               });
           }
@@ -314,7 +316,7 @@ Mirror.prototype.shareScreen = function() {
               _this.conn.send({
                   type: MAQAW_DATA_TYPE.SCREEN,
                   request: MAQAW_MIRROR_ENUMS.INPUT,
-                  index: maqawGetNodeHierarchy(this),
+                  index: maqawGetNodeHierarchy(document, this),
                   checked: this.checked
               });
           }
@@ -352,14 +354,18 @@ Mirror.prototype.mirrorScreen = function(data) {
   }
 
   function handleMessage(msg) {
-    if (msg.clear)
+    if (msg.clear){
       clearPage();
-    else if (msg.base)
+    }
+    else if (msg.base){
       _this.base = msg.base;
-    else if (msg.request === MAQAW_MIRROR_ENUMS.SCREEN_DATA)
+    }
+    else if (msg.request === MAQAW_MIRROR_ENUMS.SCREEN_DATA){
       _this._mirror[msg.f].apply(_this._mirror, msg.args);
-    else if (msg.request === MAQAW_MIRROR_ENUMS.MOUSE_MOVE || msg.request === MAQAW_MIRROR_ENUMS.MOUSE_CLICK)
-      _this.mouseMirror.data(msg);
+    }
+    else if (msg.request === MAQAW_MIRROR_ENUMS.MOUSE_MOVE || msg.request === MAQAW_MIRROR_ENUMS.MOUSE_CLICK){
+        _this.mouseMirror.data(msg);
+    }
     else if (msg.request === MAQAW_MIRROR_ENUMS.INPUT) {
       _this.inputMirror.data(msg);
     }
