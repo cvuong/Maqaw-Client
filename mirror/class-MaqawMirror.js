@@ -135,15 +135,14 @@ Mirror.prototype.openMirror = function() {
       });
     }, 
     click: function(event) {
-        console.log("sending mouse click");
-        var t = maqawGetNodeHierarchy(_this.mirrorDocument, event.target);
         _this.conn.send({
             type: MAQAW_DATA_TYPE.SCREEN,
             request: MAQAW_MIRROR_ENUMS.MOUSE_CLICK,
             coords: {x: event.pageX, y: event.pageY},
-            target: t
+            target: maqawGetNodeHierarchy(_this.mirrorDocument, event.target)
         });
-    }
+    },
+    rep: true
   });
 
   this.inputMirror = new MaqawInputMirror(this.mirrorDocument, {
@@ -387,6 +386,7 @@ function MouseMirror(doc, options) {
   this.clickEvent = options.click;
   this.doc = doc;
   var _this = this;
+  this.isRep = Boolean(options.rep);
 
     // keep track of the last element that was clicked on
   this.lastElementClicked;
@@ -456,11 +456,20 @@ MouseMirror.prototype.clickMouse = function(_data) {
     var target = maqawGetNodeFromHierarchy(this.doc, _data.target);
     // remove highlight from last clicked element
     if(this.lastElementClicked){
-        this.lastElementClicked.className = this.lastElementClicked.className.replace(/\bmaqaw-mirror-clicked-element\b/,'');
+        if(this.isRep){
+            this.lastElementClicked.className = this.lastElementClicked.className.replace(/\bmaqaw-mirror-clicked-element-rep\b/,'');
+        }
+        else {
+            this.lastElementClicked.className = this.lastElementClicked.className.replace(/\bmaqaw-mirror-clicked-element\b/,'');
+        }
     }
     // highlight the element that was clicked if it wasn't the body
     if(target.tagName !== 'BODY'){
-        target.className = target.className + ' maqaw-mirror-clicked-element';
+        if(this.isRep){
+            target.className = target.className + ' maqaw-mirror-clicked-element-rep';
+        } else {
+            target.className = target.className + ' maqaw-mirror-clicked-element';
+        }
         this.lastElementClicked = target;
     }
 
