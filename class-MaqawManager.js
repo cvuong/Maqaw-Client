@@ -40,6 +40,7 @@ function MaqawManager(options, display) {
     this.peer.on('open', function (id) {
         console.log("My id: " + id);
         that.id = id
+        that.peer.id = id;
         maqawCookies.setItem('peerId', id, Infinity);
     });
 
@@ -127,6 +128,7 @@ function MaqawManager(options, display) {
         }
 
         // update the session with the current list of visitors
+        that.peer.poll('VISITORS');
         that.repSession.updateVisitorList(that.visitors);
 
         // display the rep session
