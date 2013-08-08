@@ -1,11 +1,14 @@
-var DATA_ENUMS = {
+var MAQAW_MIRROR_ENUMS = {
   SHARE_SCREEN: 0, 
   SHARE_SCREEN_OK: 1,
   SHARE_SCREEN_REFUSE: 2,
   SCREEN_DATA: 3,
   MOUSE_MOVE: 4,
   MOUSE_CLICK: 5,
-  SCROLL: 6
+  SCROLL: 6,
+  INPUT: 7,
+  SIZE_REQUEST: 8,
+  SIZE: 9
 };
 
 function Mirror(options) {
@@ -16,9 +19,11 @@ function Mirror(options) {
   this.mirrorDocument;
   this.mirrorWindow;
   this.mouseMirror;
+  this.inputMirror;
 
-    // whether or not we are currently viewing our peer's screen
-    this.isViewingScreen = false;
+  // whether or not we are currently viewing our peer's screen
+  this.isViewingScreen = false;
+
 }
 
 /*
@@ -40,26 +45,38 @@ Mirror.prototype.data = function(_data) {
   // data to mirrorScreen
   //
   switch(_data.request) {
-    case DATA_ENUMS.SHARE_SCREEN: 
+    case MAQAW_MIRROR_ENUMS.SHARE_SCREEN:
       // Request from peer to view this screen  
-      this.conn.send({ type: 'SCREEN', request: DATA_ENUMS.SHARE_SCREEN_OK });
+      this.conn.send({ type: MAQAW_DATA_TYPE.SCREEN, request: MAQAW_MIRROR_ENUMS.SHARE_SCREEN_OK });
       this.shareScreen();
       break;
-    case DATA_ENUMS.SHARE_SCREEN_OK:
+    case MAQAW_MIRROR_ENUMS.SHARE_SCREEN_OK:
       //  Share screen request received and 
       //  validated open a screen mirror 
       this.openMirror();
       break;
-    case DATA_ENUMS.SCREEN_DATA:
+    case MAQAW_MIRROR_ENUMS.SCREEN_DATA:
       //  Screen Data.
-    case DATA_ENUMS.MOUSE_MOVE:
+    case MAQAW_MIRROR_ENUMS.MOUSE_CLICK:
+      // Mouse click event
+    case MAQAW_MIRROR_ENUMS.MOUSE_MOVE:
       // Mouse move event
-    case DATA_ENUMS.MOUSE_CLICK:
-      // TODO: Trigger some sort of fake mouse click. (could be a UI event or something more complicated)
+    case MAQAW_MIRROR_ENUMS.INPUT:
+      // Interactions with input elements
       this.mirrorScreen(_data);  
       break;
-    case DATA_ENUMS.SCROLL:
+    case MAQAW_MIRROR_ENUMS.SCROLL:
       this.mirrorWindow.scrollTo(_data.left, _data.top);
+      break;
+    case MAQAW_MIRROR_ENUMS.SIZE:
+      this.mirrorDocument.body.style.width = _data.width;
+      break;
+    case MAQAW_MIRROR_ENUMS.SIZE_REQUEST:
+      this.conn.send({
+        type: MAQAW_DATA_TYPE.SCREEN,
+        request: MAQAW_MIRROR_ENUMS.SIZE,
+        width: document.body.clientWidth
+      });
       break;
     default:
       // Unknown
@@ -78,8 +95,15 @@ Mirror.prototype.openMirror = function() {
         // attach a listener for if the window is closed
         this.mirrorWindow.addEventListener('unload', function() {
             // TODO: implement me
-            this.isViewingScreen = false;
+            _this.isViewingScreen = false;
         }, false);
+
+        // request dimensions for body
+        _this.conn.send({
+            type: MAQAW_DATA_TYPE.SCREEN,
+            request: MAQAW_MIRROR_ENUMS.SIZE_REQUEST
+        });
+
     }
 
     this.isViewingScreen = true;
@@ -105,19 +129,63 @@ Mirror.prototype.openMirror = function() {
   this.mouseMirror = new MouseMirror(this.mirrorDocument, {
     mousemove: function(event) {
       _this.conn.send({
-        type: 'SCREEN',
-        request: DATA_ENUMS.MOUSE_MOVE,
+        type: MAQAW_DATA_TYPE.SCREEN,
+        request: MAQAW_MIRROR_ENUMS.MOUSE_MOVE,
         coords: {x: event.pageX, y: event.pageY}
       });
     }, 
     click: function(event) {
         _this.conn.send({
-            type: 'SCREEN',
-            request: DATA_ENUMS.MOUSE_CLICK,
-            coords: {x: event.pageX, y: event.pageY}
+            type: MAQAW_DATA_TYPE.SCREEN,
+            request: MAQAW_MIRROR_ENUMS.MOUSE_CLICK,
+            coords: {x: event.pageX, y: event.pageY},
+            target: maqawGetNodeHierarchy(_this.mirrorDocument, event.target)
         });
-    }
-  }); 
+    },
+    rep: true
+  });
+
+  this.inputMirror = new MaqawInputMirror(this.mirrorDocument, {
+      multipleSelect: function(){
+          // get list of selected options
+          var selectedOptions = [];
+          for(var j = 0; j < this.selectedOptions.length; j++){
+              selectedOptions.push(this.selectedOptions[j].text);
+          }
+          _this.conn.send({
+              type: MAQAW_DATA_TYPE.SCREEN,
+              request: MAQAW_MIRROR_ENUMS.INPUT,
+              index: maqawGetNodeHierarchy(_this.mirrorDocument, this),
+              selectedOptions: selectedOptions
+          });
+      },
+      singleSelect: function(){
+          _this.conn.send({
+              type: MAQAW_DATA_TYPE.SCREEN,
+              request: MAQAW_MIRROR_ENUMS.INPUT,
+              index: maqawGetNodeHierarchy(_this.mirrorDocument, this),
+              selectedIndex: this.selectedIndex
+          });
+      }
+          ,
+      inputDefault: function(){
+          _this.conn.send({
+              type: MAQAW_DATA_TYPE.SCREEN,
+              request: MAQAW_MIRROR_ENUMS.INPUT,
+              index: maqawGetNodeHierarchy(_this.mirrorDocument, this),
+              text: this.value
+          });
+      }
+          ,
+      radioAndCheckbox: function(){
+          _this.conn.send({
+              type: MAQAW_DATA_TYPE.SCREEN,
+              request: MAQAW_MIRROR_ENUMS.INPUT,
+              index: maqawGetNodeHierarchy(_this.mirrorDocument, this),
+              checked: this.checked
+          });
+      }
+  });
 };
 
 Mirror.prototype.setConnection = function(conn) {
@@ -131,8 +199,8 @@ Mirror.prototype.requestScreen = function() {
   //
   if (this.conn) {
     this.conn.send({ 
-      type: 'SCREEN', 
-      request: DATA_ENUMS.SHARE_SCREEN 
+      type: MAQAW_DATA_TYPE.SCREEN,
+      request: MAQAW_MIRROR_ENUMS.SHARE_SCREEN
     });
   }
 };
@@ -145,14 +213,14 @@ Mirror.prototype.shareScreen = function() {
   if (this.conn) {
 
     this.conn.send({
-      type: 'SCREEN',
-      request: DATA_ENUMS.SCREEN_DATA,
+      type: MAQAW_DATA_TYPE.SCREEN,
+      request: MAQAW_MIRROR_ENUMS.SCREEN_DATA,
       clear: true 
     });
 
     this.conn.send({
-      type: 'SCREEN',
-      request: DATA_ENUMS.SCREEN_DATA,
+      type: MAQAW_DATA_TYPE.SCREEN,
+      request: MAQAW_MIRROR_ENUMS.SCREEN_DATA,
       base: location.href.match(/^(.*\/)[^\/]*$/)[1] 
     });
 
@@ -160,8 +228,8 @@ Mirror.prototype.shareScreen = function() {
 
       initialize: function(rootId, children) {
         _this.conn.send({
-          type: 'SCREEN',
-          request: DATA_ENUMS.SCREEN_DATA,
+          type: MAQAW_DATA_TYPE.SCREEN,
+          request: MAQAW_MIRROR_ENUMS.SCREEN_DATA,
           f: 'initialize',
           args: [rootId, children]
         });
@@ -169,8 +237,8 @@ Mirror.prototype.shareScreen = function() {
 
       applyChanged: function(removed, addedOrMoved, attributes, text) {
         _this.conn.send({
-          type: 'SCREEN',
-          request: DATA_ENUMS.SCREEN_DATA,
+          type: MAQAW_DATA_TYPE.SCREEN,
+          request: MAQAW_MIRROR_ENUMS.SCREEN_DATA,
           f: 'applyChanged',
           args: [removed, addedOrMoved, attributes, text]
         });
@@ -180,33 +248,95 @@ Mirror.prototype.shareScreen = function() {
     this.mouseMirror = new MouseMirror(document, {
       mousemove: function(event) {
         _this.conn.send({ 
-          type: 'SCREEN', 
-          request: DATA_ENUMS.MOUSE_MOVE,
+          type: MAQAW_DATA_TYPE.SCREEN,
+          request: MAQAW_MIRROR_ENUMS.MOUSE_MOVE,
           coords: {x: event.pageX, y: event.pageY}
         });
       }, 
       click: function(event) {
           _this.conn.send({
-              type: 'SCREEN',
-              request: DATA_ENUMS.MOUSE_CLICK,
-              coords: {x: event.pageX, y: event.pageY}
+              type: MAQAW_DATA_TYPE.SCREEN,
+              request: MAQAW_MIRROR_ENUMS.MOUSE_CLICK,
+              coords: {x: event.pageX, y: event.pageY},
+              target: maqawGetNodeHierarchy(document, event.target)
           });
       }
     });
   
     // Set up scroll listener
+    window.addEventListener('scroll', scrollListener, false);
     function scrollListener(){
       var top = window.pageYOffset;
       var left = window.pageXOffset;
       _this.conn.send({
-        type: 'SCREEN',
-        request: DATA_ENUMS.SCROLL,
+        type: MAQAW_DATA_TYPE.SCREEN,
+        request: MAQAW_MIRROR_ENUMS.SCROLL,
         top: top,
         left: left
       });
     }
 
-    window.addEventListener('scroll', scrollListener, false);
+
+
+    /* Set up listeners to input events */
+      this.inputMirror = new MaqawInputMirror(document, {
+          multipleSelect: function(){
+              // get list of selected options
+              var selectedOptions = [];
+              for(var j = 0; j < this.selectedOptions.length; j++){
+                  selectedOptions.push(this.selectedOptions[j].text);
+              }
+              _this.conn.send({
+                  type: MAQAW_DATA_TYPE.SCREEN,
+                  request: MAQAW_MIRROR_ENUMS.INPUT,
+                  index: maqawGetNodeHierarchy(document, this),
+                  selectedOptions: selectedOptions
+              });
+          },
+          singleSelect: function(){
+              _this.conn.send({
+                  type: MAQAW_DATA_TYPE.SCREEN,
+                  request: MAQAW_MIRROR_ENUMS.INPUT,
+                  index: maqawGetNodeHierarchy(document, this),
+                  selectedIndex: this.selectedIndex
+              });
+          }
+          ,
+          inputDefault: function(){
+              _this.conn.send({
+                  type: MAQAW_DATA_TYPE.SCREEN,
+                  request: MAQAW_MIRROR_ENUMS.INPUT,
+                  index: maqawGetNodeHierarchy(document, this),
+                  text: this.value
+              });
+          }
+          ,
+          radioAndCheckbox: function(){
+              _this.conn.send({
+                  type: MAQAW_DATA_TYPE.SCREEN,
+                  request: MAQAW_MIRROR_ENUMS.INPUT,
+                  index: maqawGetNodeHierarchy(document, this),
+                  checked: this.checked
+              });
+          }
+      });
+
+      // listener for window resize
+      var oldResize = window.onresize;
+      function newResize (){
+          _this.conn.send({
+              type: MAQAW_DATA_TYPE.SCREEN,
+              request: MAQAW_MIRROR_ENUMS.SIZE,
+              width: document.body.clientWidth
+          });
+
+          // call the old resize function as well if we overwrote one
+          if(oldResize){
+              oldResize();
+          }
+      }
+      window.onresize = newResize;
+
   } else {
     console.log("Error: Connection not established. Unable to stream screen");
   }
@@ -223,14 +353,21 @@ Mirror.prototype.mirrorScreen = function(data) {
   }
 
   function handleMessage(msg) {
-    if (msg.clear)
+    if (msg.clear){
       clearPage();
-    else if (msg.base)
+    }
+    else if (msg.base){
       _this.base = msg.base;
-    else if (msg.request === DATA_ENUMS.SCREEN_DATA) 
+    }
+    else if (msg.request === MAQAW_MIRROR_ENUMS.SCREEN_DATA){
       _this._mirror[msg.f].apply(_this._mirror, msg.args);
-    else if (msg.request === DATA_ENUMS.MOUSE_MOVE || msg.request === DATA_ENUMS.MOUSE_CLICK)
-      _this.mouseMirror.data(msg);
+    }
+    else if (msg.request === MAQAW_MIRROR_ENUMS.MOUSE_MOVE || msg.request === MAQAW_MIRROR_ENUMS.MOUSE_CLICK){
+        _this.mouseMirror.data(msg);
+    }
+    else if (msg.request === MAQAW_MIRROR_ENUMS.INPUT) {
+      _this.inputMirror.data(msg);
+    }
   }
 
   var msg = data;
@@ -249,12 +386,15 @@ function MouseMirror(doc, options) {
   this.clickEvent = options.click;
   this.doc = doc;
   var _this = this;
+  this.isRep = Boolean(options.rep);
+
+    // keep track of the last element that was clicked on
+  this.lastElementClicked;
 
   this.cursor = this.doc.createElement('div'); 
-  this.cursor.style.width = 2*this.CURSOR_RADIUS + 'px';
-  this.cursor.style.height = 2*this.CURSOR_RADIUS + 'px';
-  this.cursor.style.backgroundColor = 'red';
-  this.cursor.style.borderRadius = '999px';
+  this.cursor.style.backgroundImage = "url('http://gohapuna.com/wp/wp-content/uploads/2013/08/cursor.png')";
+  this.cursor.style.height = '30px';
+  this.cursor.style.width = '20px';
   this.cursor.style.zIndex = 10000;
   this.cursor.style.position = 'absolute';
   this.cursor.style.top = '0px';
@@ -262,7 +402,7 @@ function MouseMirror(doc, options) {
   this.cursor.setAttribute("ignore", "true");
 
     // maximum number of times per second mouse movement data will be sent
-    var MAX_SEND_RATE = 10;
+    var MAX_SEND_RATE = 40;
     // has enough time elapsed to send data again?
     var isMouseTimeUp = true;
     function moveMouse(event){
@@ -294,22 +434,45 @@ MouseMirror.prototype.data = function(_data) {
     }
   }
 
-  if (_data.request === DATA_ENUMS.MOUSE_MOVE) {
+  if (_data.request === MAQAW_MIRROR_ENUMS.MOUSE_MOVE) {
     this.moveMouse(_data);
-  } else if (_data.request === DATA_ENUMS.MOUSE_CLICK) {
+  } else if (_data.request === MAQAW_MIRROR_ENUMS.MOUSE_CLICK) {
     this.clickMouse(_data);
-  } 
+  }
+
 };
 
 MouseMirror.prototype.moveMouse = function(_data) {
-  this.cursor.style.top = _data.coords.y - this.CURSOR_RADIUS + 'px';
-  this.cursor.style.left = _data.coords.x - this.CURSOR_RADIUS + 'px';
+  this.cursor.style.top = _data.coords.y + 'px';
+  this.cursor.style.left = _data.coords.x + 'px';
 };
 
 MouseMirror.prototype.clickMouse = function(_data) {
     var x = _data.coords.x;
     var y = _data.coords.y;
     var _this = this;
+
+    // get the clicked element
+    var target = maqawGetNodeFromHierarchy(this.doc, _data.target);
+    // remove highlight from last clicked element
+    if(this.lastElementClicked){
+        if(this.isRep){
+            this.lastElementClicked.className = this.lastElementClicked.className.replace(/\bmaqaw-mirror-clicked-element-rep\b/,'');
+        }
+        else {
+            this.lastElementClicked.className = this.lastElementClicked.className.replace(/\bmaqaw-mirror-clicked-element\b/,'');
+        }
+    }
+    // highlight the element that was clicked if it wasn't the body
+    if(target.tagName !== 'BODY'){
+        if(this.isRep){
+            target.className = target.className + ' maqaw-mirror-clicked-element-rep';
+        } else {
+            target.className = target.className + ' maqaw-mirror-clicked-element';
+        }
+        this.lastElementClicked = target;
+    }
+
 
     function makeExpandingRing(){
         var radius = 1;
@@ -352,18 +515,109 @@ MouseMirror.prototype.clickMouse = function(_data) {
     var ringSpacing = 300;
     var ringCounter = 0;
 
-    (function doRings (){
+    function doRings (){
         if(ringCounter < numRings){
             makeExpandingRing();
             ringCounter++;
             setTimeout(doRings, ringSpacing);
         }
-    })();
-
-
+    }
 };
 
 MouseMirror.prototype.off = function() {
   this.doc.removeEventListener('mousemove', this.moveEvent, false);
   this.doc.removeEventListener('click', this.clickEvent, false);
+};
+
+
+/*
+ * Attach listeners to input elements so that they can be mirrored.
+ * doc - The document to search for input elements
+ * conn - The connection to use to send mirror updates about the inputs
+ */
+function MaqawInputMirror(doc, options){
+    this.doc = doc;
+    var _this = this;
+
+    this.radioAndCheckbox = options.radioAndCheckbox;
+    this.singleSelect = options.singleSelect;
+    this.multipleSelect = options.multipleSelect;
+    this.inputDefault = options.inputDefault;
+
+    function keyUpEvent(event){
+        var target = event.target;
+        if(target.tagName === 'INPUT'){
+            (_this.inputDefault.bind(target))();
+        }
+
+        else if(target.tagName === 'TEXTAREA'){
+            console.log("text area changed");
+            (_this.inputDefault.bind(target))();
+        }
+    }
+
+    function changeEvent(event){
+        var target = event.target;
+        if(target.tagName === 'INPUT'){
+            if(target.type === 'radio' || target.type === 'checkbox'){
+                (_this.radioAndCheckbox.bind(target))();
+            } else {
+                (_this.inputDefault.bind(target))();
+            }
+        }
+
+        else if(target.tagName === 'SELECT'){
+            if(target.type === 'select-one'){
+                (_this.singleSelect.bind(target))();
+            } else if(target.type === 'select-multiple'){
+                (_this.multipleSelect.bind(target))();
+            }
+        }
+    }
+
+    this.doc.addEventListener('keyup', keyUpEvent, false);
+    this.doc.addEventListener('change', changeEvent, false);
+}
+
+MaqawInputMirror.prototype.data = function(data){
+    // get the DOM node that was changed
+    var inputNode = maqawGetNodeFromHierarchy(this.doc, data.index);
+
+    // set the checked attribute if applicable
+    if(typeof data.checked !== 'undefined'){
+        inputNode.checked = data.checked;
+    }
+
+    // check for select options
+    else if (typeof data.selectedIndex !== 'undefined'){
+        inputNode.selectedIndex = data.selectedIndex;
+    }
+
+    // check for multiple select options
+    else if (typeof data.selectedOptions !== 'undefined'){
+        var i, option, length = inputNode.options.length, selectedOptions = data.selectedOptions,
+            optionsList = inputNode.options;
+        for (i = 0; i < length; i++ ) {
+            option = optionsList[i];
+            var index = selectedOptions.indexOf(option.text);
+            if(index !== -1){
+                option.selected = true;
+            } else {
+                option.selected = false;
+            }
+
+        }
+    }
+
+    // otherwise set text value
+    else {
+        inputNode.value = data.text;
+    }
+};
+
+MaqawInputMirror.prototype.off = function() {
+    this.doc.removeEventListener('keyup', this.inputDefault, false);
+    this.doc.removeEventListener('change', this.radioAndCheckbox, false);
+    this.doc.removeEventListener('change', this.singleSelect, false);
+    this.doc.removeEventListener('change', this.multipleSelect, false);
 };
