@@ -43,6 +43,11 @@ MaqawPeer.prototype.connect = function(id) {
   return dataConnection;
 };
 
+// Poll for data 
+MaqawPeer.prototype.poll = function(request) {
+  this.socket.emit('poll', request);
+};
+
 // Setup an event listener
 MaqawPeer.prototype.on = function(event, cb) {
   if (event == 'open') event = 'peer open';
